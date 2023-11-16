@@ -1,0 +1,584 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5BFE3D5B2B06E43A00203EB3 /* LLMLLApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */; };
+		5BFE3D5D2B06E43A00203EB3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */; };
+		5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5E2B06E43A00203EB3 /* Item.swift */; };
+		5BFE3D612B06E43B00203EB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5BFE3D602B06E43B00203EB3 /* Assets.xcassets */; };
+		5BFE3D642B06E43B00203EB3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5BFE3D632B06E43B00203EB3 /* Preview Assets.xcassets */; };
+		5BFE3D6F2B06E43B00203EB3 /* LLMLLTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D6E2B06E43B00203EB3 /* LLMLLTests.swift */; };
+		5BFE3D792B06E43B00203EB3 /* LLMLLUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D782B06E43B00203EB3 /* LLMLLUITests.swift */; };
+		5BFE3D7B2B06E43B00203EB3 /* LLMLLUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D7A2B06E43B00203EB3 /* LLMLLUITestsLaunchTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5BFE3D6B2B06E43B00203EB3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5BFE3D4F2B06E43A00203EB3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5BFE3D562B06E43A00203EB3;
+			remoteInfo = LLMLL;
+		};
+		5BFE3D752B06E43B00203EB3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5BFE3D4F2B06E43A00203EB3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5BFE3D562B06E43A00203EB3;
+			remoteInfo = LLMLL;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		5BFE3D572B06E43A00203EB3 /* LLMLL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LLMLL.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMLLApp.swift; sourceTree = "<group>"; };
+		5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5BFE3D5E2B06E43A00203EB3 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		5BFE3D602B06E43B00203EB3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5BFE3D632B06E43B00203EB3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		5BFE3D652B06E43B00203EB3 /* LLMLL.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LLMLL.entitlements; sourceTree = "<group>"; };
+		5BFE3D6A2B06E43B00203EB3 /* LLMLLTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LLMLLTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5BFE3D6E2B06E43B00203EB3 /* LLMLLTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMLLTests.swift; sourceTree = "<group>"; };
+		5BFE3D742B06E43B00203EB3 /* LLMLLUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LLMLLUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5BFE3D782B06E43B00203EB3 /* LLMLLUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMLLUITests.swift; sourceTree = "<group>"; };
+		5BFE3D7A2B06E43B00203EB3 /* LLMLLUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMLLUITestsLaunchTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5BFE3D542B06E43A00203EB3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BFE3D672B06E43B00203EB3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BFE3D712B06E43B00203EB3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5BFE3D4E2B06E43A00203EB3 = {
+			isa = PBXGroup;
+			children = (
+				5BFE3D592B06E43A00203EB3 /* LLMLL */,
+				5BFE3D6D2B06E43B00203EB3 /* LLMLLTests */,
+				5BFE3D772B06E43B00203EB3 /* LLMLLUITests */,
+				5BFE3D582B06E43A00203EB3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5BFE3D582B06E43A00203EB3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5BFE3D572B06E43A00203EB3 /* LLMLL.app */,
+				5BFE3D6A2B06E43B00203EB3 /* LLMLLTests.xctest */,
+				5BFE3D742B06E43B00203EB3 /* LLMLLUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5BFE3D592B06E43A00203EB3 /* LLMLL */ = {
+			isa = PBXGroup;
+			children = (
+				5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */,
+				5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */,
+				5BFE3D5E2B06E43A00203EB3 /* Item.swift */,
+				5BFE3D602B06E43B00203EB3 /* Assets.xcassets */,
+				5BFE3D652B06E43B00203EB3 /* LLMLL.entitlements */,
+				5BFE3D622B06E43B00203EB3 /* Preview Content */,
+			);
+			path = LLMLL;
+			sourceTree = "<group>";
+		};
+		5BFE3D622B06E43B00203EB3 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				5BFE3D632B06E43B00203EB3 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		5BFE3D6D2B06E43B00203EB3 /* LLMLLTests */ = {
+			isa = PBXGroup;
+			children = (
+				5BFE3D6E2B06E43B00203EB3 /* LLMLLTests.swift */,
+			);
+			path = LLMLLTests;
+			sourceTree = "<group>";
+		};
+		5BFE3D772B06E43B00203EB3 /* LLMLLUITests */ = {
+			isa = PBXGroup;
+			children = (
+				5BFE3D782B06E43B00203EB3 /* LLMLLUITests.swift */,
+				5BFE3D7A2B06E43B00203EB3 /* LLMLLUITestsLaunchTests.swift */,
+			);
+			path = LLMLLUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5BFE3D562B06E43A00203EB3 /* LLMLL */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5BFE3D7E2B06E43B00203EB3 /* Build configuration list for PBXNativeTarget "LLMLL" */;
+			buildPhases = (
+				5BFE3D532B06E43A00203EB3 /* Sources */,
+				5BFE3D542B06E43A00203EB3 /* Frameworks */,
+				5BFE3D552B06E43A00203EB3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LLMLL;
+			productName = LLMLL;
+			productReference = 5BFE3D572B06E43A00203EB3 /* LLMLL.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5BFE3D692B06E43B00203EB3 /* LLMLLTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5BFE3D812B06E43B00203EB3 /* Build configuration list for PBXNativeTarget "LLMLLTests" */;
+			buildPhases = (
+				5BFE3D662B06E43B00203EB3 /* Sources */,
+				5BFE3D672B06E43B00203EB3 /* Frameworks */,
+				5BFE3D682B06E43B00203EB3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5BFE3D6C2B06E43B00203EB3 /* PBXTargetDependency */,
+			);
+			name = LLMLLTests;
+			productName = LLMLLTests;
+			productReference = 5BFE3D6A2B06E43B00203EB3 /* LLMLLTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		5BFE3D732B06E43B00203EB3 /* LLMLLUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5BFE3D842B06E43B00203EB3 /* Build configuration list for PBXNativeTarget "LLMLLUITests" */;
+			buildPhases = (
+				5BFE3D702B06E43B00203EB3 /* Sources */,
+				5BFE3D712B06E43B00203EB3 /* Frameworks */,
+				5BFE3D722B06E43B00203EB3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5BFE3D762B06E43B00203EB3 /* PBXTargetDependency */,
+			);
+			name = LLMLLUITests;
+			productName = LLMLLUITests;
+			productReference = 5BFE3D742B06E43B00203EB3 /* LLMLLUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5BFE3D4F2B06E43A00203EB3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					5BFE3D562B06E43A00203EB3 = {
+						CreatedOnToolsVersion = 15.0.1;
+					};
+					5BFE3D692B06E43B00203EB3 = {
+						CreatedOnToolsVersion = 15.0.1;
+						TestTargetID = 5BFE3D562B06E43A00203EB3;
+					};
+					5BFE3D732B06E43B00203EB3 = {
+						CreatedOnToolsVersion = 15.0.1;
+						TestTargetID = 5BFE3D562B06E43A00203EB3;
+					};
+				};
+			};
+			buildConfigurationList = 5BFE3D522B06E43A00203EB3 /* Build configuration list for PBXProject "LLMLL" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5BFE3D4E2B06E43A00203EB3;
+			productRefGroup = 5BFE3D582B06E43A00203EB3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5BFE3D562B06E43A00203EB3 /* LLMLL */,
+				5BFE3D692B06E43B00203EB3 /* LLMLLTests */,
+				5BFE3D732B06E43B00203EB3 /* LLMLLUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5BFE3D552B06E43A00203EB3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5BFE3D642B06E43B00203EB3 /* Preview Assets.xcassets in Resources */,
+				5BFE3D612B06E43B00203EB3 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BFE3D682B06E43B00203EB3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BFE3D722B06E43B00203EB3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5BFE3D532B06E43A00203EB3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5BFE3D5D2B06E43A00203EB3 /* ContentView.swift in Sources */,
+				5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */,
+				5BFE3D5B2B06E43A00203EB3 /* LLMLLApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BFE3D662B06E43B00203EB3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5BFE3D6F2B06E43B00203EB3 /* LLMLLTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5BFE3D702B06E43B00203EB3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5BFE3D7B2B06E43B00203EB3 /* LLMLLUITestsLaunchTests.swift in Sources */,
+				5BFE3D792B06E43B00203EB3 /* LLMLLUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5BFE3D6C2B06E43B00203EB3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5BFE3D562B06E43A00203EB3 /* LLMLL */;
+			targetProxy = 5BFE3D6B2B06E43B00203EB3 /* PBXContainerItemProxy */;
+		};
+		5BFE3D762B06E43B00203EB3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5BFE3D562B06E43A00203EB3 /* LLMLL */;
+			targetProxy = 5BFE3D752B06E43B00203EB3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5BFE3D7C2B06E43B00203EB3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5BFE3D7D2B06E43B00203EB3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		5BFE3D7F2B06E43B00203EB3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LLMLL/LLMLL.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"LLMLL/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLL;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5BFE3D802B06E43B00203EB3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LLMLL/LLMLL.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"LLMLL/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLL;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5BFE3D822B06E43B00203EB3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLLTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LLMLL.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LLMLL";
+			};
+			name = Debug;
+		};
+		5BFE3D832B06E43B00203EB3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLLTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LLMLL.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LLMLL";
+			};
+			name = Release;
+		};
+		5BFE3D852B06E43B00203EB3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLLUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = LLMLL;
+			};
+			name = Debug;
+		};
+		5BFE3D862B06E43B00203EB3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLLUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = LLMLL;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5BFE3D522B06E43A00203EB3 /* Build configuration list for PBXProject "LLMLL" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BFE3D7C2B06E43B00203EB3 /* Debug */,
+				5BFE3D7D2B06E43B00203EB3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5BFE3D7E2B06E43B00203EB3 /* Build configuration list for PBXNativeTarget "LLMLL" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BFE3D7F2B06E43B00203EB3 /* Debug */,
+				5BFE3D802B06E43B00203EB3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5BFE3D812B06E43B00203EB3 /* Build configuration list for PBXNativeTarget "LLMLLTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BFE3D822B06E43B00203EB3 /* Debug */,
+				5BFE3D832B06E43B00203EB3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5BFE3D842B06E43B00203EB3 /* Build configuration list for PBXNativeTarget "LLMLLUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BFE3D852B06E43B00203EB3 /* Debug */,
+				5BFE3D862B06E43B00203EB3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5BFE3D4F2B06E43A00203EB3 /* Project object */;
+}
