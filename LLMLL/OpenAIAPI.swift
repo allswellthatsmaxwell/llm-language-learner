@@ -7,6 +7,16 @@
 
 import Foundation
 
+private func readApiKey() -> String? {
+    if let path = Bundle.main.path(forResource: "keys", ofType: "plist"),
+       let config = NSDictionary(contentsOfFile: path) as? [String: Any] {
+        let apiKey = config["OPENAI_API_KEY"] as? String
+        return apiKey
+    }
+    return nil
+}
+
+
 class OpenAIAPI {
     private let apiKey: String
     private let session = URLSession.shared
@@ -14,11 +24,17 @@ class OpenAIAPI {
         fatalError("Subclasses need to provide their own URL.")
     }
     
-    init(apiKey: String) {
-        self.apiKey = apiKey
+    init() {
+        if let apiKeyLocal = readApiKey() {
+            self.apiKey = apiKeyLocal
+        } else {
+            print("Failed to find OPENAI_API_KEY")
+            self.apiKey = "MissingAPIKey"
+        }
     }
     
-    func constructRequest(url: String) -> URLRequest? {
+    
+    private func constructRequest(url: String) -> URLRequest? {
         guard let apiUrl = URL(string: url) else {
             print("Invalid URL")
             return nil
@@ -32,7 +48,6 @@ class OpenAIAPI {
     }
     
     func makeRequest(requestBody: [String: Any], completion: @escaping (Result<Data, Error>) -> Void) {
-
         guard var request = constructRequest(url: url) else { return }
         
         do {
