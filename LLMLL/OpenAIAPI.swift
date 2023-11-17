@@ -33,8 +33,11 @@ class OpenAIAPI {
         }
     }
     
+    open func addContentType(_ request: inout URLRequest) {
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    }
     
-    private func constructRequest(url: String) -> URLRequest? {
+    func constructRequest(url: String) -> URLRequest? {
         guard let apiUrl = URL(string: url) else {
             Logger.shared.log("Invalid URL")
             return nil
@@ -43,21 +46,11 @@ class OpenAIAPI {
         var request = URLRequest(url: apiUrl)
         request.httpMethod = "POST"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        addContentType(&request)
         return request
     }
     
-    func makeRequest(requestBody: [String: Any], completion: @escaping (Result<Data, Error>) -> Void) {
-        guard var request = constructRequest(url: url) else { return }
-        
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
-            request.httpBody = jsonData
-        } catch {
-            completion(.failure(error))
-            return
-        }
-
+    func submitRequest(request: URLRequest, completion: @escaping (Result<Data, Error>) -> Void) {
         session.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
@@ -65,7 +58,7 @@ class OpenAIAPI {
             }
 
             guard let data = data else {
-                completion(.failure(NSError(domain: "TextToSpeechAPIError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                completion(.failure(NSError(domain: "APIError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                 return
             }
 
@@ -81,13 +74,77 @@ class TextToSpeechAPI: OpenAIAPI {
     }
     
     func synthesizeSpeech(from text: String, completion: @escaping (Result<Data, Error>) -> Void) {
+        guard var request = constructRequest(url: url) else { return }
+        
+        do {
+            request.httpBody = try JSONSerialization.data(
+                withJSONObject: [
+                    "model": "tts-1",
+                    "input": text,
+                    "voice": "alloy"
+                ])
+        } catch {
+            completion(.failure(error))
+            return
+        }
+        
+        submitRequest(request: request, completion: completion)
+    }
+}
 
-        let requestBody: [String: Any] = [
-            "model": "tts-1",
-            "input": text,
-            "voice": "alloy"
-        ]
+class TranscriptionAPI: OpenAIAPI {
+    override var url: String {
+        return "https://api.openai.com/v1/audio/transcriptions"
+    }
+    private let boundary = "Boundary-\(UUID().uuidString)"
+    
+    override func addContentType(_ request: inout URLRequest) {
+        request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+    }
+    
+    private func convertFileData(fieldName: String,
+                                 fileName: String,
+                                 mimeType: String,
+                                 fileURL: URL,
+                                 using boundary: String) -> Data {
+        let data = NSMutableData()
+        data.appendString("--\(boundary)\r\n")
+        data.appendString("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n")
+        data.appendString("Content-Type: \(mimeType)\r\n\r\n")
+        data.append(try! Data(contentsOf: fileURL))
+        data.appendString("\r\n")
+        return data as Data
+    }
+    
+    func transcribe(fileURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+        guard var request = constructRequest(url: url) else { return }
 
-        makeRequest(requestBody: requestBody, completion: completion)
+        let httpBody = NSMutableData()
+
+        // Append file data
+        httpBody.append(convertFileData(fieldName: "file",
+                                        fileName: fileURL.lastPathComponent,
+                                        mimeType: "audio/x-m4a",
+                                        fileURL: fileURL,
+                                        using: boundary))
+
+        // Append model parameter
+        httpBody.appendString("--\(boundary)\r\n")
+        httpBody.appendString("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
+        httpBody.appendString("whisper-1\r\n")
+
+        // End of the multipart data
+        httpBody.appendString("--\(boundary)--\r\n")
+
+        request.httpBody = httpBody as Data
+
+        submitRequest(request: request, completion: completion)
+    }
+}
+
+extension NSMutableData {
+    func appendString(_ string: String) {
+        let data = string.data(using: String.Encoding.utf8, allowLossyConversion: false)
+        append(data!)
     }
 }

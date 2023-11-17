@@ -6,6 +6,7 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
     private var audioDeviceInput: AVCaptureDeviceInput?
     private var audioFileOutput: AVCaptureAudioFileOutput?
     var isRecording = false
+    var savedAudioURL: URL?
 
     override init() {
         super.init()
@@ -50,13 +51,14 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
         captureSession.startRunning()
 
         // Define the output URL for the audio file
-        let outputURL = getDocumentsDirectory().appendingPathComponent("Recording-\(Date().timeIntervalSince1970).m4a")
+        let audioURL = getDocumentsDirectory().appendingPathComponent("Recording-\(Date().timeIntervalSince1970).m4a")
 
         // Define the output file type
         let outputFileType = AVFileType.m4a
 
         // Start recording with specified file type
-        audioFileOutput.startRecording(to: outputURL, outputFileType: outputFileType, recordingDelegate: self)
+        audioFileOutput.startRecording(to: audioURL, outputFileType: outputFileType, recordingDelegate: self)
+        self.savedAudioURL = audioURL
     }
 
     private func stopRecording() {

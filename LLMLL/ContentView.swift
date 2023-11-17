@@ -19,12 +19,16 @@ func getDocumentsDirectory() -> URL {
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
-    private var audioPlayerManager = AudioPlayerManager(audioPath: "savedAudio.mp3");
-    private var audioRecorder = AudioRecorder()
+    private let audioPath: String = "savedAudio.mp3"
+    var audioRecorder = AudioRecorder()
+    private var audioPlayerManager: AudioPlayerManager
     private var textToSpeechAPI: TextToSpeechAPI
+    private var transcriptionAPI: TranscriptionAPI
     
     init() {
         self.textToSpeechAPI = TextToSpeechAPI()
+        self.transcriptionAPI = TranscriptionAPI()
+        self.audioPlayerManager = AudioPlayerManager(audioPath: audioPath);
     }
     
     var body: some View {
@@ -48,6 +52,28 @@ struct ContentView: View {
                     }
                 }
             }
+            
+            Button("Transcribe") {
+                if let audioURL = self.audioRecorder.savedAudioURL {
+                    self.transcriptionAPI.transcribe(fileURL: audioURL) {
+                        result in switch result {
+                        case .success(let transcriptData):
+                            if let transcriptString = String(data: transcriptData, encoding: .utf8) {
+                                Logger.shared.log("Transcription Received")
+                                Logger.shared.log(transcriptString)
+                            } else {
+                                Logger.shared.log("Failed to convert transcript data to string")
+                            }
+                        case .failure(let error):
+                            // Handle any errors
+                            Logger.shared.log("Error: \(error.localizedDescription)")
+                        }
+                    }
+                } else {
+                    Logger.shared.log("AudioURL is nil")
+                }
+            }
+            
             
             Button(action: {
                 audioRecorder.toggleIsRecording()
