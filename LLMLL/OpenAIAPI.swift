@@ -10,7 +10,7 @@ import Foundation
 class OpenAIAPI {
     private let apiKey: String
     private let session = URLSession.shared
-    private var url: String {
+    var url: String {
         fatalError("Subclasses need to provide their own URL.")
     }
     
@@ -56,5 +56,23 @@ class OpenAIAPI {
 
             completion(.success(data))
         }.resume()
+    }
+}
+
+
+class TextToSpeechAPI: OpenAIAPI {
+    override var url: String {
+        return "https://api.openai.com/v1/audio/speech"
+    }
+    
+    func synthesizeSpeech(from text: String, completion: @escaping (Result<Data, Error>) -> Void) {
+
+        let requestBody: [String: Any] = [
+            "model": "tts-1",
+            "input": text,
+            "voice": "alloy"
+        ]
+
+        makeRequest(requestBody: requestBody, completion: completion)
     }
 }

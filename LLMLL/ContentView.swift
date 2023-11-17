@@ -46,8 +46,6 @@ struct ContentView: View {
     init() {
         var apiKey: String?
         if let apiKeyLocal = readApiKey() {
-            // Use apiKey safely here
-            print("API Key: \(apiKeyLocal)")
             apiKey = apiKeyLocal
         } else {
             print("Failed to find OPENAI_API_KEY")
