@@ -26,6 +26,15 @@ func saveAudioFile(audioData: Data) {
     }
 }
 
+func readApiKey() -> String? {
+    if let path = Bundle.main.path(forResource: "keys", ofType: "plist"),
+       let config = NSDictionary(contentsOfFile: path) as? [String: Any] {
+        let apiKey = config["OPENAI_API_KEY"] as? String
+        return apiKey
+    }
+    return nil
+}
+
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -36,7 +45,7 @@ struct ContentView: View {
     
     init() {
         var apiKey: String?
-        if let apiKeyLocal = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] {
+        if let apiKeyLocal = readApiKey() {
             // Use apiKey safely here
             print("API Key: \(apiKeyLocal)")
             apiKey = apiKeyLocal
@@ -71,7 +80,7 @@ struct ContentView: View {
             
             
             Button("Synthesize Speech") {
-                textToSpeechAPI.synthesizeSpeech(from: "The quick brown fox jumped over the lazy dog.") {
+                textToSpeechAPI.synthesizeSpeech(from: "저는 친구들과 공원에 갔어요") {
                     result in
                     
                     switch result {
