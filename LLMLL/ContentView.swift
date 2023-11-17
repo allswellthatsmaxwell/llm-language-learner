@@ -17,7 +17,7 @@ func getDocumentsDirectory() -> URL {
 
 func saveAudioFile(audioData: Data) {
     let filename = getDocumentsDirectory().appendingPathComponent("savedAudio.mp3")
-
+    
     do {
         try audioData.write(to: filename, options: [.atomicWrite, .completeFileProtection])
         print("Audio saved to \(filename.path)")
@@ -40,6 +40,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     @State private var audioPlayer: AVAudioPlayer?
+    private var audioRecorder = AudioRecorder()
     
     private var textToSpeechAPI: TextToSpeechAPI
     
@@ -51,7 +52,6 @@ struct ContentView: View {
             print("Failed to find OPENAI_API_KEY")
         }
         textToSpeechAPI = TextToSpeechAPI(apiKey: apiKey ?? "MissingAPIKey")
-
     }
     
     private func playAudio() {
@@ -91,6 +91,17 @@ struct ContentView: View {
                         print("Error: \(error.localizedDescription)")
                     }
                 }
+            }
+            
+            Button(action: {
+                // Toggle recording state
+                audioRecorder.toggleIsRecording()
+            }) {
+                Text(audioRecorder.isRecording ? "Stop Recording" : "Start Recording")
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(audioRecorder.isRecording ? Color.red : Color.blue)
+                    .cornerRadius(8)
             }
         }
     }
