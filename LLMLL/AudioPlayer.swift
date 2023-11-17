@@ -13,7 +13,7 @@ class AudioPlayerManager {
         let fileURL = getDocumentsDirectory().appendingPathComponent(self.audioPath)
 
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            print("Audio file does not exist")
+            Logger.shared.log("Audio file does not exist")
             return
         }
 
@@ -22,7 +22,7 @@ class AudioPlayerManager {
             audioPlayer?.prepareToPlay() // Prepare the player for playback
             audioPlayer?.play()
         } catch {
-            print("Failed to play audio: \(error)")
+            Logger.shared.log("Failed to play audio: \(error)")
         }
     }
 
@@ -31,9 +31,9 @@ class AudioPlayerManager {
 
         do {
             try audioData.write(to: filename, options: [.atomicWrite, .completeFileProtection])
-            print("Audio saved to \(filename.path)")
+            Logger.shared.log("Audio saved to \(filename.path)")
         } catch {
-            print("Failed to save audio: \(error)")
+            Logger.shared.log("Failed to save audio: \(error)")
         }
     }
 

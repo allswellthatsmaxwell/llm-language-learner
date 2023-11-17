@@ -16,7 +16,7 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
         captureSession = AVCaptureSession()
 
         guard let audioDevice = AVCaptureDevice.default(for: .audio) else {
-            print("Audio device not found")
+            Logger.shared.log("Audio device not found")
             return
         }
 
@@ -31,7 +31,7 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
                 captureSession.addOutput(audioFileOutput!)
             }
         } catch {
-            print("Error setting up audio input: \(error)")
+            Logger.shared.log("Error setting up audio input: \(error)")
         }
     }
 
@@ -73,9 +73,9 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
     // AVCaptureFileOutputRecordingDelegate methods
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         if let error = error {
-            print("Recording error: \(error)")
+            Logger.shared.log("Recording error: \(error)")
         } else {
-            print("Recording finished successfully. Saved to \(outputFileURL.path)")
+            Logger.shared.log("Recording finished successfully. Saved to \(outputFileURL.path)")
         }
     }
 }

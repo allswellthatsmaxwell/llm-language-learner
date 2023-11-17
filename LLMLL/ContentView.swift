@@ -40,11 +40,11 @@ struct ContentView: View {
                     switch result {
                     case .success(let audioData):
                         // Handle the received data, e.g., play audio or save to file
-                        print("Audio Data Received")
+                        Logger.shared.log("Audio Data Received")
                         self.audioPlayerManager.saveAudioFile(audioData: audioData)
                     case .failure(let error):
                         // Handle any errors
-                        print("Error: \(error.localizedDescription)")
+                        Logger.shared.log("Error: \(error.localizedDescription)")
                     }
                 }
             }

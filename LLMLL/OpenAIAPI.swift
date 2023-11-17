@@ -28,7 +28,7 @@ class OpenAIAPI {
         if let apiKeyLocal = readApiKey() {
             self.apiKey = apiKeyLocal
         } else {
-            print("Failed to find OPENAI_API_KEY")
+            Logger.shared.log("Failed to find OPENAI_API_KEY")
             self.apiKey = "MissingAPIKey"
         }
     }
@@ -36,7 +36,7 @@ class OpenAIAPI {
     
     private func constructRequest(url: String) -> URLRequest? {
         guard let apiUrl = URL(string: url) else {
-            print("Invalid URL")
+            Logger.shared.log("Invalid URL")
             return nil
         }
 
