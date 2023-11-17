@@ -17,6 +17,7 @@
 		5BFE3D7B2B06E43B00203EB3 /* LLMLLUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D7A2B06E43B00203EB3 /* LLMLLUITestsLaunchTests.swift */; };
 		5BFE3D882B06E98400203EB3 /* TextToSpeechAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D872B06E98400203EB3 /* TextToSpeechAPI.swift */; };
 		5BFE3D8B2B06FBDD00203EB3 /* keys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5BFE3D8A2B06FBDD00203EB3 /* keys.plist */; };
+		5BFE3D8D2B070AF000203EB3 /* OpenAIAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D8C2B070AF000203EB3 /* OpenAIAPI.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 		5BFE3D872B06E98400203EB3 /* TextToSpeechAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeechAPI.swift; sourceTree = "<group>"; };
 		5BFE3D892B06F00300203EB3 /* LLMLL.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LLMLL.entitlements; sourceTree = "<group>"; };
 		5BFE3D8A2B06FBDD00203EB3 /* keys.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = keys.plist; sourceTree = "<group>"; };
+		5BFE3D8C2B070AF000203EB3 /* OpenAIAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIAPI.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,7 +84,6 @@
 		5BFE3D4E2B06E43A00203EB3 = {
 			isa = PBXGroup;
 			children = (
-				5BFE3D8A2B06FBDD00203EB3 /* keys.plist */,
 				5BFE3D892B06F00300203EB3 /* LLMLL.entitlements */,
 				5BFE3D592B06E43A00203EB3 /* LLMLL */,
 				5BFE3D6D2B06E43B00203EB3 /* LLMLLTests */,
@@ -104,7 +105,9 @@
 		5BFE3D592B06E43A00203EB3 /* LLMLL */ = {
 			isa = PBXGroup;
 			children = (
+				5BFE3D8C2B070AF000203EB3 /* OpenAIAPI.swift */,
 				5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */,
+				5BFE3D8A2B06FBDD00203EB3 /* keys.plist */,
 				5BFE3D872B06E98400203EB3 /* TextToSpeechAPI.swift */,
 				5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */,
 				5BFE3D5E2B06E43A00203EB3 /* Item.swift */,
@@ -271,6 +274,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5BFE3D8D2B070AF000203EB3 /* OpenAIAPI.swift in Sources */,
 				5BFE3D5D2B06E43A00203EB3 /* ContentView.swift in Sources */,
 				5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */,
 				5BFE3D882B06E98400203EB3 /* TextToSpeechAPI.swift in Sources */,
