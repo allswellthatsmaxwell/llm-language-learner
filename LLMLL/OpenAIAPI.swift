@@ -151,19 +151,22 @@ extension NSMutableData {
 
 
 
-class Message: Codable {
+class OpenAIMessage: Codable {
     var role: String
     var content: String
+    let isUser: Bool
     
     init(role: String, content: String) {
         self.role = role
         self.content = content
+        isUser = role == "user"
     }
     
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         role = try container.decode(String.self, forKey: .role)
         content = try container.decode(String.self, forKey: .content)
+        isUser = role == "user"
     }
     
     convenience init(userContent: String) {
@@ -181,7 +184,7 @@ class ChatAPI: OpenAIAPI {
         return "https://api.openai.com/v1/chat/completions"
     }
     
-    func sendChat(messages: [Message], completion: @escaping (Result<Data, Error>) -> Void) {
+    func sendChat(messages: [OpenAIMessage], completion: @escaping (Result<Data, Error>) -> Void) {
         guard var request = constructRequest(url: url) else { return }
         
         let messageDicts = messages.map { ["role": $0.role, "content": $0.content] }
