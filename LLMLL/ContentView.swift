@@ -73,7 +73,7 @@ struct ContentView: View {
             }
             
             Button("Send Chat Message") {
-                self.chatAPI.sendChat(messages: [Message(role: "user", content: "hi")]) {
+                self.chatAPI.sendChat(messages: [Message(userContent: "hi")]) {
                     result in switch result {
                         case .success(let completion):
                         if let completionString = String(data: completion, encoding: .utf8) {

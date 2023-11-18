@@ -42,7 +42,7 @@ class OpenAIAPI {
             Logger.shared.log("Invalid URL")
             return nil
         }
-
+        
         var request = URLRequest(url: apiUrl)
         request.httpMethod = "POST"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -56,12 +56,12 @@ class OpenAIAPI {
                 completion(.failure(error))
                 return
             }
-
+            
             guard let data = data else {
                 completion(.failure(NSError(domain: "APIError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                 return
             }
-
+            
             completion(.success(data))
         }.resume()
     }
@@ -118,26 +118,26 @@ class TranscriptionAPI: OpenAIAPI {
     
     func transcribe(fileURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
         guard var request = constructRequest(url: url) else { return }
-
+        
         let httpBody = NSMutableData()
-
+        
         // Append file data
         httpBody.append(convertFileData(fieldName: "file",
                                         fileName: fileURL.lastPathComponent,
                                         mimeType: "audio/x-m4a",
                                         fileURL: fileURL,
                                         using: boundary))
-
+        
         // Append model parameter
         httpBody.appendString("--\(boundary)\r\n")
         httpBody.appendString("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
         httpBody.appendString("whisper-1\r\n")
-
+        
         // End of the multipart data
         httpBody.appendString("--\(boundary)--\r\n")
-
+        
         request.httpBody = httpBody as Data
-
+        
         submitRequest(request: request, completion: completion)
     }
 }
@@ -154,10 +154,24 @@ extension NSMutableData {
 class Message: Codable {
     var role: String
     var content: String
-
+    
     init(role: String, content: String) {
         self.role = role
         self.content = content
+    }
+    
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        role = try container.decode(String.self, forKey: .role)
+        content = try container.decode(String.self, forKey: .content)
+    }
+    
+    convenience init(userContent: String) {
+        self.init(role: "user", content: userContent)
+    }
+    
+    convenience init(systemContent: String) {
+        self.init(role: "system", content: systemContent)
     }
 }
 
