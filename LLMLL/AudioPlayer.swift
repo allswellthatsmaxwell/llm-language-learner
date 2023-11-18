@@ -19,7 +19,7 @@ class AudioPlayerManager {
 
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: fileURL)
-            audioPlayer?.prepareToPlay() // Prepare the player for playback
+            audioPlayer?.prepareToPlay()
             audioPlayer?.play()
         } catch {
             Logger.shared.log("Failed to play audio: \(error)")

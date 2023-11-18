@@ -19,15 +19,15 @@ func getDocumentsDirectory() -> URL {
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
+    private var audioPlayerManager: AudioPlayerManager
+    
     private let audioPath: String = "savedAudio.mp3"
     var audioRecorder = AudioRecorder()
-    private var audioPlayerManager: AudioPlayerManager
-    private var textToSpeechAPI: TextToSpeechAPI
-    private var transcriptionAPI: TranscriptionAPI
+    private var textToSpeechAPI = TextToSpeechAPI()
+    private var transcriptionAPI = TranscriptionAPI()
+    private var chatAPI: ChatAPI = ChatAPI()
     
     init() {
-        self.textToSpeechAPI = TextToSpeechAPI()
-        self.transcriptionAPI = TranscriptionAPI()
         self.audioPlayerManager = AudioPlayerManager(audioPath: audioPath);
     }
     
@@ -43,11 +43,9 @@ struct ContentView: View {
                     
                     switch result {
                     case .success(let audioData):
-                        // Handle the received data, e.g., play audio or save to file
                         Logger.shared.log("Audio Data Received")
                         self.audioPlayerManager.saveAudioFile(audioData: audioData)
                     case .failure(let error):
-                        // Handle any errors
                         Logger.shared.log("Error: \(error.localizedDescription)")
                     }
                 }
@@ -71,6 +69,22 @@ struct ContentView: View {
                     }
                 } else {
                     Logger.shared.log("AudioURL is nil")
+                }
+            }
+            
+            Button("Send Chat Message") {
+                self.chatAPI.sendChat(messages: [Message(role: "user", content: "hi")]) {
+                    result in switch result {
+                        case .success(let completion):
+                        if let completionString = String(data: completion, encoding: .utf8) {
+                            Logger.shared.log(completionString)
+                        } else {
+                            Logger.shared.log("Failed to convert chat completion data to string")
+                        }
+                        
+                    case .failure(let error):
+                        Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
+                    }
                 }
             }
             

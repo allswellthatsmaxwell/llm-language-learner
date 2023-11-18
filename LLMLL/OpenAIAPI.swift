@@ -148,3 +148,41 @@ extension NSMutableData {
         append(data!)
     }
 }
+
+
+
+class Message: Codable {
+    var role: String
+    var content: String
+
+    init(role: String, content: String) {
+        self.role = role
+        self.content = content
+    }
+}
+
+
+class ChatAPI: OpenAIAPI {
+    override var url: String {
+        return "https://api.openai.com/v1/chat/completions"
+    }
+    
+    func sendChat(messages: [Message], completion: @escaping (Result<Data, Error>) -> Void) {
+        guard var request = constructRequest(url: url) else { return }
+        
+        let messageDicts = messages.map { ["role": $0.role, "content": $0.content] }
+        
+        do {
+            let requestBody: [String: Any] = [
+                "model": "gpt-3.5-turbo",
+                "messages": messageDicts
+            ]
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        } catch {
+            completion(.failure(error))
+            return
+        }
+        
+        submitRequest(request: request, completion: completion)
+    }
+}
