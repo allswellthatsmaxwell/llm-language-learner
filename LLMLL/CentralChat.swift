@@ -26,7 +26,7 @@ struct ChatView: View {
     @State private var messages: [ChatMessage] = []
     @State private var inputText: String = ""
     private var chatAPI: ChatAPI = ChatAPI()
-
+    
     var body: some View {
         VStack {
             // Messages List
@@ -44,40 +44,44 @@ struct ChatView: View {
                     }
                 }
             }
-
+            
             // Message Input
             HStack {
                 TextField("Type a message", text: $inputText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-
+                
                 Button("Send") {
-                    sendMessage()
+                    sendMessage { firstMessage in
+                        if let message = firstMessage {
+                            print("Received message: \(message.content)")
+                            self.messages.append(ChatMessage(msg: message))
+                        } else { Logger.shared.log("No message received or an error occurred") }
+                    }
                 }
                 .padding()
             }
         }
     }
-
-    private func sendMessage() {
+    
+    private func sendMessage(completion: @escaping (OpenAIMessage?) -> Void) {
         let msg = OpenAIMessage(userContent: inputText)
         let newMessage = ChatMessage(msg: msg)
         messages.append(newMessage)
-        self.chatAPI.sendChat(messages: [msg]) {
-            result in switch result {
-                case .success(let completion):
-                if let completionString = String(data: completion, encoding: .utf8) {
-                    Logger.shared.log(completionString)
-                } else {
-                    Logger.shared.log("Failed to convert chat completion data to string")
-                }
+        self.chatAPI.sendChat(messages: [msg]) { result in
+            switch result {
+            case .success(let data):
+                do {
+                    let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+                    if let firstMessage = response.choices.first?.message {
+                        Logger.shared.log("Message: \(firstMessage.content)")
+                        return completion(firstMessage)
+                    } else { Logger.shared.log("No messages found in response") }
+                } catch { Logger.shared.log("Failed to decode response: \(error.localizedDescription)") }
                 
-            case .failure(let error):
-                Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
+            case .failure(let error): Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
             }
         }
-
-        
     }
 }
 

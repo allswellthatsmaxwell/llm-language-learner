@@ -11,6 +11,7 @@
 		5B46BD852B07328B0037BBC3 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD842B07323B0037BBC3 /* AudioPlayer.swift */; };
 		5B46BD872B0741920037BBC3 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD862B0741920037BBC3 /* Logger.swift */; };
 		5B46BD892B096B260037BBC3 /* CentralChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD882B096B260037BBC3 /* CentralChat.swift */; };
+		5B46BD8B2B0971D50037BBC3 /* OpenAIChatAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD8A2B0971D50037BBC3 /* OpenAIChatAPI.swift */; };
 		5BFE3D5B2B06E43A00203EB3 /* LLMLLApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */; };
 		5BFE3D5D2B06E43A00203EB3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */; };
 		5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5E2B06E43A00203EB3 /* Item.swift */; };
@@ -46,6 +47,7 @@
 		5B46BD842B07323B0037BBC3 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		5B46BD862B0741920037BBC3 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		5B46BD882B096B260037BBC3 /* CentralChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CentralChat.swift; sourceTree = "<group>"; };
+		5B46BD8A2B0971D50037BBC3 /* OpenAIChatAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIChatAPI.swift; sourceTree = "<group>"; };
 		5BFE3D572B06E43A00203EB3 /* LLMLL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LLMLL.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMLLApp.swift; sourceTree = "<group>"; };
 		5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 				5B46BD842B07323B0037BBC3 /* AudioPlayer.swift */,
 				5B422AE92B0718B800BC9FB4 /* AudioRecorder.swift */,
 				5BFE3D8C2B070AF000203EB3 /* OpenAIAPI.swift */,
+				5B46BD8A2B0971D50037BBC3 /* OpenAIChatAPI.swift */,
 				5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */,
 				5BFE3D8A2B06FBDD00203EB3 /* keys.plist */,
 				5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */,
@@ -287,6 +290,7 @@
 			files = (
 				5BFE3D8D2B070AF000203EB3 /* OpenAIAPI.swift in Sources */,
 				5BFE3D5D2B06E43A00203EB3 /* ContentView.swift in Sources */,
+				5B46BD8B2B0971D50037BBC3 /* OpenAIChatAPI.swift in Sources */,
 				5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */,
 				5BFE3D5B2B06E43A00203EB3 /* LLMLLApp.swift in Sources */,
 				5B46BD872B0741920037BBC3 /* Logger.swift in Sources */,
