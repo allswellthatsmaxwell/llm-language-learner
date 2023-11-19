@@ -19,22 +19,18 @@ func getDocumentsDirectory() -> URL {
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
-    private var audioPlayerManager: AudioPlayerManager
     
-    private let audioPath: String = "savedAudio.mp3"
     var audioRecorder = AudioRecorder()
+    private var audioPlayerManager = AudioPlayerManager()
     private var textToSpeechAPI = TextToSpeechAPI()
     private var transcriptionAPI = TranscriptionAPI()
     private var chatAPI: ChatAPI = ChatAPI()
     
-    init() {
-        self.audioPlayerManager = AudioPlayerManager(audioPath: audioPath);
-    }
     
     var body: some View {
         VStack {
             Button("Play Audio") {
-                audioPlayerManager.playAudio()
+                audioPlayerManager.playAudio(audioPath: "savedAudio.mp3")
             }
             
             Button("Synthesize Speech") {
@@ -44,7 +40,7 @@ struct ContentView: View {
                     switch result {
                     case .success(let audioData):
                         Logger.shared.log("Audio Data Received")
-                        self.audioPlayerManager.saveAudioFile(audioData: audioData)
+                        saveAudioFile(audioData: audioData, audioPath: "savedAudio.mp3")
                     case .failure(let error):
                         Logger.shared.log("Error: \(error.localizedDescription)")
                     }

@@ -41,10 +41,12 @@ class OpenAIMessage: Codable {
 
 
 let systemMessage = OpenAIMessage(systemContent: """
-You are to act as a teacher for Korean language and grammar, for a student who speaks English as their first language. \
-The user will send you a transcript of them speaking Korean. They spoke it aloud, and the text you receive is the result of a \
-transcription algorithm. The student's pronunciation will not be great, so the transcription may have issues. Therefore, you \
-should do your best to interpret what they are trying to say, giving your best guess as to what they meant to say.
+You are to act as a teacher for Korean language and grammar, for a student who speaks English as their first language.
+The user will send you a transcript of them speaking Korean. They spoke it aloud, and the text you receive \
+is the result of a transcription algorithm. The student's pronunciation will not be great, \
+so the transcription may have issues.
+Therefore, you should do your best to interpret what they are trying to say, \
+giving your best guess as to what they meant to say.
 (Not using the polite form, with 요 in the right places, counts as a mistake you should correct.)
 
 * If there are no problems with the Korean you receive, just respond with the original Hangul, as well as the English translation of what you received.
@@ -56,18 +58,7 @@ should do your best to interpret what they are trying to say, giving your best g
   * Finally, give the translation.
 * Do not include the english pronunciation. A separate utility will pronounce the Korean you provide, using text-to-speech technology.
 """)
-//# Output format
-//Always respond with a JSON dict with three keys: "hangul", "translation", and "comments".
-//The "hangul" value should be the entire Hangul of either the original text (where there were no corrections) or the corrected text (when there were).
-//There should always be hangul in your response, \
-//but if in some weird case there isn't, still include the "hangul" key, just leave it as an empty string. 
-//"comments" should contain any comments and corrections. It's OK for "comments" to contain hangul - for example, in your breakdown.
 
-
-// ## Examples
-// ### Input
-// 저는 친구과 공원예 갔어요.
-// """
 
 struct OpenAIResponse: Codable {
     var choices: [Choice]
@@ -93,9 +84,7 @@ class ChatAPI: OpenAIAPI {
         do {
             let requestBody: [String: Any] = [
                 "model": "gpt-3.5-turbo-1106",
-                "messages": messageDicts
-                // "response_format": ["type": "json_object"]
-            ]
+                "messages": messageDicts            ]
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             submitRequest(request: request, completion: completion)
         } catch {

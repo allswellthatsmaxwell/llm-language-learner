@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
+import AVFoundation
 
 struct ChatMessage: Identifiable {
     let id = UUID()
@@ -36,6 +37,10 @@ class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     var audioRecorder = AudioRecorder()
     private var transcriptionAPI = TranscriptionAPI()
+    private var textToSpeechAPI = TextToSpeechAPI()
+    private var synthesizedAudioData: Data?
+    private var audioPlayer: AVAudioPlayer?
+    
     
     init() {
         audioRecorder.onRecordingStopped { [weak self] audioURL in
@@ -44,6 +49,33 @@ class ChatViewModel: ObservableObject {
             } else {
                 Logger.shared.log("AudioURL is nil")
             }
+        }
+    }
+    
+    func hearButtonTapped(for content: String) {
+        if let audioData = synthesizedAudioData {
+            // Audio data is already present, play it
+            playAudio(from: audioData)
+        } else {
+            // Synthesize speech and then play it
+            textToSpeechAPI.synthesizeSpeech(from: content) { [weak self] result in
+                switch result {
+                case .success(let audioData):
+                    self?.synthesizedAudioData = audioData
+                    self?.playAudio(from: audioData)
+                case .failure(let error):
+                    Logger.shared.log("Failed to synthesize speech: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func playAudio(from data: Data) {
+        do {
+            audioPlayer = try AVAudioPlayer(data: data)
+            audioPlayer?.play()
+        } catch {
+            Logger.shared.log("Failed to play audio: \(error)")
         }
     }
     
@@ -116,6 +148,14 @@ struct ChatView: View {
                             Logger.shared.log("No message received, or an error occurred")
                         }
                     }
+                }
+                
+                .padding()
+                
+                Button(action: {
+                    viewModel.hearButtonTapped(for: "Your text to be spoken")
+                }) {
+                    Image(systemName: "speaker.3.fill")
                 }
                 .padding()
             }
