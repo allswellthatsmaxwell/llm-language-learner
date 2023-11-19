@@ -141,9 +141,12 @@ struct ChatView: View {
                 
                 Button("Send") {
                     Logger.shared.log("History so far: \(messages.map { $0.content })")
-                    sendMessage { firstMessage in
+                    let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
+                    let allMessages = self.messages + [userMessage]
+                    self.advisorChatAPI.sendMessages(messages: allMessages) { firstMessage in
                         if let message = firstMessage {
                             Logger.shared.log("Received message: \(message.content)")
+                            self.messages.append(userMessage)
                             self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
                         } else {
                             Logger.shared.log("No message received, or an error occurred")
@@ -154,8 +157,22 @@ struct ChatView: View {
                 .padding()
                 
                 Button(action: {
-                    let extractedText = self.extractorChatAPI.submit([self.messages[-1].openAIMessage])
-                    viewModel.hearButtonTapped(for: "Your text to be spoken")
+                    if let lastMessage = self.messages.last {
+                        Logger.shared.log("Speaker button: sending message: \(lastMessage.content)")
+                        // convert AIMessage from the advisor context into a userMessage for this context
+                        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: lastMessage.content))
+                        
+                        self.extractorChatAPI.sendMessages(messages: [userMessage]) { firstMessage in
+                            guard let message = firstMessage else {
+                                Logger.shared.log("extractor/speaker: No message received, or an error occurred")
+                                return
+                            }
+                            Logger.shared.log("Received message: \(message.content)")
+                            viewModel.hearButtonTapped(for: message.content)
+                        }
+                    } else {
+                        Logger.shared.log("No messages to use; messages is: \(self.messages)")
+                    }
                 }) {
                     Image(systemName: "speaker.3.fill")
                 }
@@ -163,32 +180,11 @@ struct ChatView: View {
             }
         }
     }
-    
-    private func sendMessage(completion: @escaping (OpenAIMessage?) -> Void) {
-        let msg = OpenAIMessage(userContent: self.viewModel.inputText)
-        let newMessage = ChatMessage(msg: msg)
-        self.messages.append(newMessage)
-        self.advisorChatAPI.submit(messages: [msg]) { result in
-            switch result {
-            case .success(let data):
-                do {
-                    let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-                    Logger.shared.log("Response: \(response)")
-                    if let firstMessage = response.choices.first?.message {
-                        Logger.shared.log("Message: \(firstMessage.content)")
-                        return completion(firstMessage)
-                    } else { Logger.shared.log("No messages found in response") }
-                } catch { Logger.shared.log("Failed to decode response: \(error.localizedDescription)") }
-                
-            case .failure(let error): Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
-            }
-        }
-    }
 }
 
 //
-//struct CentralChatView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        ChatView()
-//    }
-//}
+// struct CentralChatView_Previews: PreviewProvider {
+//     static var previews: some View {
+//         ChatView()
+//     }
+// }

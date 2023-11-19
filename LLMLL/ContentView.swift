@@ -69,7 +69,7 @@ struct ContentView: View {
             }
             
             Button("Send Chat Message") {
-                self.chatAPI.submit(messages: [OpenAIMessage(userContent: "hi")]) {
+                self.chatAPI.getChatCompletionResponse(messages: [OpenAIMessage(userContent: "hi")]) {
                     result in switch result {
                         case .success(let completion):
                         if let completionString = String(data: completion, encoding: .utf8) {

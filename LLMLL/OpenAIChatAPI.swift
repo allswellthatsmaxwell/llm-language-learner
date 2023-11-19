@@ -35,7 +35,7 @@ class OpenAIMessage: Codable {
     }
     
     convenience init(AIContent: String) {
-        self.init(role: "ai", content: AIContent)
+        self.init(role: "assistant", content: AIContent)
     }
 }
 
@@ -58,7 +58,7 @@ class ChatAPI: OpenAIAPI {
         return "https://api.openai.com/v1/chat/completions"
     }
     
-    func submit(messages: [OpenAIMessage], completion: @escaping (Result<Data, Error>) -> Void) {
+    func getChatCompletionResponse(messages: [OpenAIMessage], completion: @escaping (Result<Data, Error>) -> Void) {
         guard var request = constructRequest(url: url) else { return }
         
         let allMessages = [OpenAIMessage(systemContent: self.systemPrompt)] + messages
@@ -75,6 +75,37 @@ class ChatAPI: OpenAIAPI {
             completion(.failure(error))
         }
     }
+    
+    func sendMessages(messages: [ChatMessage], completion: @escaping (OpenAIMessage?) -> Void) {
+        self.getChatCompletionResponse(messages: messages.map { $0.openAIMessage }) { result in
+            switch result {
+            case .success(let data):
+                do {
+                    // Logger.shared.log("sendMessages response data: \(String(data: data, encoding: .utf8) ?? "No data")")
+                    let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+                    // Logger.shared.log("Response: \(response)")
+                    if let firstMessage = response.choices.first?.message {
+                        // Logger.shared.log("Message: \(firstMessage.content)")
+                        return completion(firstMessage)
+                    } else {
+                        Logger.shared.log("No messages found in response")
+                    }
+                } catch {
+                    Logger.shared.log("Failed to decode response: \(error.localizedDescription)")
+                    if let error = error as? DecodingError {
+                        switch error {
+                        case .dataCorrupted(let context), .keyNotFound(_, let context),
+                                .typeMismatch(_, let context), .valueNotFound(_, let context):
+                            Logger.shared.log("Decoding error: \(context.debugDescription)")
+                        @unknown default:
+                            Logger.shared.log("Unknown decoding error")
+                        }
+                    }
+                }
+            case .failure(let error): Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
+            }
+        }
+    }
 }
 
 class AdvisorChatAPI: ChatAPI {
@@ -84,9 +115,7 @@ You are to act as a teacher for Korean language and grammar, for a student who s
 The user will send you a transcript of them speaking Korean. They spoke it aloud, and the text you receive \
 is the result of a transcription algorithm. The student's pronunciation will not be great, \
 so the transcription may have issues.
-Therefore, you should do your best to interpret what they are trying to say, \
-giving your best guess as to what they meant to say.
-(Not using the polite form, with 요 in the right places, counts as a mistake you should correct.)
+Therefore, you should do your best to interpret what they are trying to say.
 
 * If there are no problems with the Korean you receive, just respond with the original Hangul, as well as the English translation of what you received.
 * If there are problems:
@@ -94,6 +123,7 @@ giving your best guess as to what they meant to say.
   * give a breakdown (in English) of the corrections you made.
     * In the breakdown, list the Hangul you added, removed, or changed, with the description of why.
     * Use only the 요, not the formal 니다 form, unless the user themselves included a formal 니다 form in their transcription.
+    * Not using the polite form, with 요 in the right places, counts as a mistake you should correct.
   * Finally, give the translation.
 * Do not include the english pronunciation. A separate utility will pronounce the Korean you provide, using text-to-speech technology.
 """
