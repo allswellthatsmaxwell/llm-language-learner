@@ -55,14 +55,14 @@ should do your best to interpret what they are trying to say, giving your best g
     * Use only the 요, not the formal 니다 form, unless the user themselves included a formal 니다 form in their transcription.
   * Finally, give the translation.
 * Do not include the english pronunciation. A separate utility will pronounce the Korean you provide, using text-to-speech technology.
-
-# Output format
-Always respond with a JSON dict with two keys: "hangul" and "comments".
-The "hangul" value should be the entire Hangul of either the original text (where there were no corrections) or the corrected text (when there were).
-There should always be hangul in your response, \
-but if in some weird case there isn't, still include the "hangul" key, just leave it as an empty string. "comments" should \
-contain everything else. It's OK for "comments" to contain hangul - for example, in your breakdown.
 """)
+//# Output format
+//Always respond with a JSON dict with three keys: "hangul", "translation", and "comments".
+//The "hangul" value should be the entire Hangul of either the original text (where there were no corrections) or the corrected text (when there were).
+//There should always be hangul in your response, \
+//but if in some weird case there isn't, still include the "hangul" key, just leave it as an empty string. 
+//"comments" should contain any comments and corrections. It's OK for "comments" to contain hangul - for example, in your breakdown.
+
 
 // ## Examples
 // ### Input
@@ -93,15 +93,14 @@ class ChatAPI: OpenAIAPI {
         do {
             let requestBody: [String: Any] = [
                 "model": "gpt-3.5-turbo-1106",
-                "messages": messageDicts,
-                "response_format": ["type": "json_object"]
+                "messages": messageDicts
+                // "response_format": ["type": "json_object"]
             ]
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+            submitRequest(request: request, completion: completion)
         } catch {
             completion(.failure(error))
-            return
         }
         
-        submitRequest(request: request, completion: completion)
     }
 }

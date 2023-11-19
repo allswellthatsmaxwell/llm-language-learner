@@ -23,7 +23,13 @@ struct ChatMessage: Identifiable {
 }
 
 struct TranscriptionResult: Codable {
-    var text: String
+    let text: String
+}
+
+struct ChatResult: Codable {
+    let hangul: String
+    let translation: String
+    let comments: String
 }
 
 class ChatViewModel: ObservableObject {
@@ -104,9 +110,11 @@ struct ChatView: View {
                     Logger.shared.log("History so far: \(messages.map { $0.content })")
                     sendMessage { firstMessage in
                         if let message = firstMessage {
-                            print("Received message: \(message.content)")
+                            Logger.shared.log("Received message: \(message.content)")
                             self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
-                        } else { Logger.shared.log("No message received, or an error occurred") }
+                        } else {
+                            Logger.shared.log("No message received, or an error occurred")
+                        }
                     }
                 }
                 .padding()
@@ -136,9 +144,9 @@ struct ChatView: View {
     }
 }
 
-
-struct CentralChatView_Previews: PreviewProvider {
-    static var previews: some View {
-        ChatView()
-    }
-}
+//
+//struct CentralChatView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        ChatView()
+//    }
+//}
