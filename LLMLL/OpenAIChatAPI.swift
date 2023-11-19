@@ -33,6 +33,10 @@ class OpenAIMessage: Codable {
     convenience init(systemContent: String) {
         self.init(role: "system", content: systemContent)
     }
+    
+    convenience init(AIContent: String) {
+        self.init(role: "ai", content: AIContent)
+    }
 }
 
 

@@ -22,6 +22,10 @@ struct ChatMessage: Identifiable {
     }
 }
 
+struct TranscriptionResult: Codable {
+    var text: String
+}
+
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     var audioRecorder = AudioRecorder()
@@ -45,14 +49,15 @@ class ChatViewModel: ObservableObject {
         transcriptionAPI.transcribe(fileURL: fileURL) { [weak self] result in
             switch result {
             case .success(let transcriptData):
-                if let transcriptString = String(data: transcriptData, encoding: .utf8) {
+                do {
+                    let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)
                     DispatchQueue.main.async {
-                        self?.inputText = transcriptString
-                        Logger.shared.log("inputText set to transcriptString: " + transcriptString + "is the transcript.")
+                        self?.inputText = transcriptionResult.text
+                        Logger.shared.log("inputText set to transcript: " + transcriptionResult.text)
                     }
                     Logger.shared.log("Transcription Received")
-                } else {
-                    Logger.shared.log("Failed to convert transcript data to string")
+                } catch {
+                    Logger.shared.log("Failed to decode transcription result: \(error.localizedDescription)")
                 }
             case .failure(let error):
                 Logger.shared.log("Error: \(error.localizedDescription)")
@@ -92,13 +97,16 @@ struct ChatView: View {
                 Button(action: viewModel.toggleRecording) {
                     Image(systemName: viewModel.audioRecorder.isRecording ? "mic.fill" : "mic")
                 }
+                
                 .padding()
+                
                 Button("Send") {
+                    Logger.shared.log("History so far: \(messages.map { $0.content })")
                     sendMessage { firstMessage in
                         if let message = firstMessage {
                             print("Received message: \(message.content)")
-                            self.messages.append(ChatMessage(msg: message))
-                        } else { Logger.shared.log("No message received or an error occurred") }
+                            self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                        } else { Logger.shared.log("No message received, or an error occurred") }
                     }
                 }
                 .padding()
@@ -109,7 +117,7 @@ struct ChatView: View {
     private func sendMessage(completion: @escaping (OpenAIMessage?) -> Void) {
         let msg = OpenAIMessage(userContent: viewModel.inputText)
         let newMessage = ChatMessage(msg: msg)
-        messages.append(newMessage)
+        self.messages.append(newMessage)
         self.chatAPI.sendChat(messages: [msg]) { result in
             switch result {
             case .success(let data):
