@@ -123,6 +123,7 @@ struct ChatView: View {
             case .success(let data):
                 do {
                     let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+                    Logger.shared.log("Response: \(response)")
                     if let firstMessage = response.choices.first?.message {
                         Logger.shared.log("Message: \(firstMessage.content)")
                         return completion(firstMessage)

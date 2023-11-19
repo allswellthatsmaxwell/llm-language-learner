@@ -51,13 +51,8 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
               let audioFileOutput = audioFileOutput else { return }
         captureSession.startRunning()
 
-        // Define the output URL for the audio file
         let audioURL = getDocumentsDirectory().appendingPathComponent("Recording-\(Date().timeIntervalSince1970).m4a")
-
-        // Define the output file type
         let outputFileType = AVFileType.m4a
-
-        // Start recording with specified file type
         audioFileOutput.startRecording(to: audioURL, outputFileType: outputFileType, recordingDelegate: self)
         self.savedAudioURL = audioURL
         
