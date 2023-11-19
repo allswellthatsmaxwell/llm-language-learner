@@ -142,14 +142,31 @@ struct ChatView: View {
             List(messages) { message in
                 HStack {
                     if message.isUser {
-                        Spacer() // Push user messages to the right
-                    }
-                    Text(message.openAIMessage.content)
+                        Spacer() // Right-align user messages
+                        Text(message.content)
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                        Button(action: {
+                            viewModel.hearButtonTapped(for: message)
+                        }) {
+                            Image(systemName: "speaker.3.fill")
+                        }
+                    } else {
+                        // AI message with a hear button
+                        Text(message.content)
+                            .padding()
+                            .background(Color.gray)
+                            .cornerRadius(10)
+                        
+                        Button(action: {
+                            viewModel.hearButtonTapped(for: message)
+                        }) {
+                            Image(systemName: "speaker.3.fill")
+                        }
                         .padding()
-                        .background(message.isUser ? Color.blue : Color.gray)
-                        .cornerRadius(10)
-                    if !message.isUser {
-                        Spacer() // Push bot messages to the left
+                        
+                        Spacer() // Left-align AI messages
                     }
                 }
             }
@@ -182,19 +199,19 @@ struct ChatView: View {
                 
                 .padding()
                 
-                Button(action: {
-                    if let lastMessage = self.messages.last {
-                        Logger.shared.log("Speaker button: sending message: \(lastMessage.content)")
-                        // convert AIMessage from the advisor context into a userMessage for this context
-                        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: lastMessage.content))
-                        viewModel.hearButtonTapped(for: userMessage)
-                    }  else {
-                        Logger.shared.log("No messages to use; messages is: \(self.messages)")
-                    }
-                }) {
-                    Image(systemName: "speaker.3.fill")
-                }
-                .padding()
+//                Button(action: {
+//                    if let lastMessage = self.messages.last {
+//                        Logger.shared.log("Speaker button: sending message: \(lastMessage.content)")
+//                        // convert AIMessage from the advisor context into a userMessage for this context
+//                        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: lastMessage.content))
+//                        viewModel.hearButtonTapped(for: userMessage)
+//                    }  else {
+//                        Logger.shared.log("No messages to use; messages is: \(self.messages)")
+//                    }
+//                }) {
+//                    Image(systemName: "speaker.3.fill")
+//                }
+//                .padding()
             }
         }
     }
