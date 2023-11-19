@@ -10,11 +10,6 @@ import SwiftData
 import AVFoundation
 
 
-func getDocumentsDirectory() -> URL {
-    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-    return paths[0]
-}
-
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext

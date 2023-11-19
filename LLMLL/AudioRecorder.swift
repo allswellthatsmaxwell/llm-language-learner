@@ -69,11 +69,6 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
         recordingStoppedCompletion?(savedAudioURL)
     }
 
-    private func getDocumentsDirectory() -> URL {
-        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        return paths[0]
-    }
-
     // AVCaptureFileOutputRecordingDelegate methods
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         if let error = error {
@@ -82,4 +77,9 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
             Logger.shared.log("Recording finished successfully. Saved to \(outputFileURL.path)")
         }
     }
+}
+
+func getDocumentsDirectory() -> URL {
+    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    return paths[0]
 }

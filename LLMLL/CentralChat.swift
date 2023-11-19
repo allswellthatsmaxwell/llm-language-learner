@@ -15,11 +15,13 @@ struct ChatMessage: Identifiable {
     var openAIMessage: OpenAIMessage
     var isUser: Bool // True for user messages, false for bot messages
     let content: String
+    let audioFilename: String
     
     init(msg: OpenAIMessage) {
         self.openAIMessage = msg
         self.isUser = msg.isUser
         self.content = msg.content
+        self.audioFilename = "\(id).mp3"
     }
 }
 
@@ -38,7 +40,7 @@ class ChatViewModel: ObservableObject {
     var audioRecorder = AudioRecorder()
     private var transcriptionAPI = TranscriptionAPI()
     private var textToSpeechAPI = TextToSpeechAPI()
-    private var synthesizedAudioData: Data?
+    private var extractorChatAPI = ExtractorChatAPI()
     private var audioPlayer: AVAudioPlayer?
     
     
@@ -52,23 +54,48 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    func hearButtonTapped(for content: String) {
-        if let audioData = synthesizedAudioData {
-            // Audio data is already present, play it
-            playAudio(from: audioData)
+    func hearButtonTapped(for message: ChatMessage) {
+        let fileManager = FileManager.default
+        let audioFilePath = self.documentsDirectory.appendingPathComponent(message.audioFilename)
+        
+        if fileManager.fileExists(atPath: audioFilePath.path) {
+            do {
+                let audioData = try Data(contentsOf: audioFilePath)
+                playAudio(from: audioData)
+            } catch {
+                Logger.shared.log("Error reading audio file: \(error)")
+            }
         } else {
-            // Synthesize speech and then play it
-            textToSpeechAPI.synthesizeSpeech(from: content) { [weak self] result in
-                switch result {
-                case .success(let audioData):
-                    self?.synthesizedAudioData = audioData
-                    self?.playAudio(from: audioData)
-                case .failure(let error):
-                    Logger.shared.log("Failed to synthesize speech: \(error)")
+            Logger.shared.log("Audio file does not exist, extracting foreign text")
+            // extract foreign text from the message
+            self.extractorChatAPI.sendMessages(messages: [message]) { firstMessage in
+                guard let message = firstMessage else {
+                    Logger.shared.log("extractor/speaker: No message received, or an error occurred")
+                    return
+                }
+                Logger.shared.log("Received message: \(message.content)")
+                // Synthesize speech and then play it
+                self.textToSpeechAPI.synthesizeSpeech(from: message.content) { [weak self] result in
+                    switch result {
+                    case .success(let audioData):
+                        do {
+                            try audioData.write(to: audioFilePath)
+                            self?.playAudio(from: audioData)
+                        } catch {
+                            Logger.shared.log("Error saving audio file: \(error)")
+                        }
+                    case .failure(let error):
+                        Logger.shared.log("Failed to synthesize speech: \(error)")
+                    }
                 }
             }
         }
     }
+    
+    private var documentsDirectory: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+    
     
     private func playAudio(from data: Data) {
         do {
@@ -108,7 +135,6 @@ struct ChatView: View {
     @State private var messages: [ChatMessage] = []
     @StateObject private var viewModel = ChatViewModel()
     private var advisorChatAPI = AdvisorChatAPI()
-    private var extractorChatAPI = ExtractorChatAPI()
     
     var body: some View {
         VStack {
@@ -161,16 +187,8 @@ struct ChatView: View {
                         Logger.shared.log("Speaker button: sending message: \(lastMessage.content)")
                         // convert AIMessage from the advisor context into a userMessage for this context
                         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: lastMessage.content))
-                        
-                        self.extractorChatAPI.sendMessages(messages: [userMessage]) { firstMessage in
-                            guard let message = firstMessage else {
-                                Logger.shared.log("extractor/speaker: No message received, or an error occurred")
-                                return
-                            }
-                            Logger.shared.log("Received message: \(message.content)")
-                            viewModel.hearButtonTapped(for: message.content)
-                        }
-                    } else {
+                        viewModel.hearButtonTapped(for: userMessage)
+                    }  else {
                         Logger.shared.log("No messages to use; messages is: \(self.messages)")
                     }
                 }) {

@@ -81,7 +81,7 @@ class TextToSpeechAPI: OpenAIAPI {
                 withJSONObject: [
                     "model": "tts-1",
                     "input": text,
-                    "voice": "alloy"
+                    "voice": "onyx"
                 ])
         } catch {
             completion(.failure(error))
