@@ -107,7 +107,8 @@ class ChatViewModel: ObservableObject {
 struct ChatView: View {
     @State private var messages: [ChatMessage] = []
     @StateObject private var viewModel = ChatViewModel()
-    private var chatAPI: ChatAPI = ChatAPI()
+    private var advisorChatAPI = AdvisorChatAPI()
+    private var extractorChatAPI = ExtractorChatAPI()
     
     var body: some View {
         VStack {
@@ -153,6 +154,7 @@ struct ChatView: View {
                 .padding()
                 
                 Button(action: {
+                    let extractedText = self.extractorChatAPI.submit([self.messages[-1].openAIMessage])
                     viewModel.hearButtonTapped(for: "Your text to be spoken")
                 }) {
                     Image(systemName: "speaker.3.fill")
@@ -163,10 +165,10 @@ struct ChatView: View {
     }
     
     private func sendMessage(completion: @escaping (OpenAIMessage?) -> Void) {
-        let msg = OpenAIMessage(userContent: viewModel.inputText)
+        let msg = OpenAIMessage(userContent: self.viewModel.inputText)
         let newMessage = ChatMessage(msg: msg)
         self.messages.append(newMessage)
-        self.chatAPI.sendChat(messages: [msg]) { result in
+        self.advisorChatAPI.submit(messages: [msg]) { result in
             switch result {
             case .success(let data):
                 do {

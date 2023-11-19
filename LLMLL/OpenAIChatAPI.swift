@@ -39,8 +39,47 @@ class OpenAIMessage: Codable {
     }
 }
 
+struct OpenAIResponse: Codable {
+    var choices: [Choice]
+}
 
-let systemMessage = OpenAIMessage(systemContent: """
+struct Choice: Codable {
+    var message: OpenAIMessage
+}
+
+
+class ChatAPI: OpenAIAPI {
+    
+    var systemPrompt: String {
+        fatalError("Subclasses need to provide their own systemMessage.")
+    }
+    
+    override var url: String {
+        return "https://api.openai.com/v1/chat/completions"
+    }
+    
+    func submit(messages: [OpenAIMessage], completion: @escaping (Result<Data, Error>) -> Void) {
+        guard var request = constructRequest(url: url) else { return }
+        
+        let allMessages = [OpenAIMessage(systemContent: self.systemPrompt)] + messages
+        
+        let messageDicts = allMessages.map { ["role": $0.role, "content": $0.content] }
+        
+        do {
+            let requestBody: [String: Any] = [
+                "model": "gpt-3.5-turbo-1106",
+                "messages": messageDicts            ]
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+            submitRequest(request: request, completion: completion)
+        } catch {
+            completion(.failure(error))
+        }
+    }
+}
+
+class AdvisorChatAPI: ChatAPI {
+    override var systemPrompt: String {
+        return """
 You are to act as a teacher for Korean language and grammar, for a student who speaks English as their first language.
 The user will send you a transcript of them speaking Korean. They spoke it aloud, and the text you receive \
 is the result of a transcription algorithm. The student's pronunciation will not be great, \
@@ -57,39 +96,16 @@ giving your best guess as to what they meant to say.
     * Use only the 요, not the formal 니다 form, unless the user themselves included a formal 니다 form in their transcription.
   * Finally, give the translation.
 * Do not include the english pronunciation. A separate utility will pronounce the Korean you provide, using text-to-speech technology.
-""")
-
-
-struct OpenAIResponse: Codable {
-    var choices: [Choice]
-}
-
-struct Choice: Codable {
-    var message: OpenAIMessage
-}
-
-
-class ChatAPI: OpenAIAPI {
-    override var url: String {
-        return "https://api.openai.com/v1/chat/completions"
-    }
-    
-    func sendChat(messages: [OpenAIMessage], completion: @escaping (Result<Data, Error>) -> Void) {
-        guard var request = constructRequest(url: url) else { return }
-        
-        let allMessages = [systemMessage] + messages
-        
-        let messageDicts = allMessages.map { ["role": $0.role, "content": $0.content] }
-        
-        do {
-            let requestBody: [String: Any] = [
-                "model": "gpt-3.5-turbo-1106",
-                "messages": messageDicts            ]
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-            submitRequest(request: request, completion: completion)
-        } catch {
-            completion(.failure(error))
-        }
-        
+"""
     }
 }
+
+class ExtractorChatAPI: ChatAPI {
+    override var systemPrompt: String {
+        return """
+Extract the Korean Hangul text from the first part of the message the user gives you. Only extract the one Hangul word/phrase/sentence/paragraph/text.
+Don't extract any English. Return only the Hangul you extract, with no additional text.
+"""
+    }
+}
+
