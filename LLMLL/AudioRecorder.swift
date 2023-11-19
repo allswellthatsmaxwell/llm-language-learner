@@ -6,6 +6,7 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
     private var audioDeviceInput: AVCaptureDeviceInput?
     private var audioFileOutput: AVCaptureAudioFileOutput?
     var isRecording = false
+    private var recordingStoppedCompletion: ((URL?) -> Void)?
     var savedAudioURL: URL?
 
     override init() {
@@ -59,12 +60,18 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
         // Start recording with specified file type
         audioFileOutput.startRecording(to: audioURL, outputFileType: outputFileType, recordingDelegate: self)
         self.savedAudioURL = audioURL
+        
+    }
+    
+    func onRecordingStopped(completion: @escaping (URL?) -> Void) {
+        recordingStoppedCompletion = completion
     }
 
     private func stopRecording() {
         guard let captureSession = captureSession, captureSession.isRunning else { return }
         captureSession.stopRunning()
         audioFileOutput?.stopRecording()
+        recordingStoppedCompletion?(savedAudioURL)
     }
 
     private func getDocumentsDirectory() -> URL {

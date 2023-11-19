@@ -22,9 +22,48 @@ struct ChatMessage: Identifiable {
     }
 }
 
+class ChatViewModel: ObservableObject {
+    @Published var inputText: String = ""
+    var audioRecorder = AudioRecorder()
+    private var transcriptionAPI = TranscriptionAPI()
+    
+    init() {
+        audioRecorder.onRecordingStopped { [weak self] audioURL in
+            if let url = audioURL {
+                self?.transcribeAudio(fileURL: url)
+            } else {
+                Logger.shared.log("AudioURL is nil")
+            }
+        }
+    }
+    
+    func toggleRecording() {
+        audioRecorder.toggleIsRecording()
+    }
+    
+    private func transcribeAudio(fileURL: URL) {
+        transcriptionAPI.transcribe(fileURL: fileURL) { [weak self] result in
+            switch result {
+            case .success(let transcriptData):
+                if let transcriptString = String(data: transcriptData, encoding: .utf8) {
+                    DispatchQueue.main.async {
+                        self?.inputText = transcriptString
+                        Logger.shared.log("inputText set to transcriptString: " + transcriptString + "is the transcript.")
+                    }
+                    Logger.shared.log("Transcription Received")
+                } else {
+                    Logger.shared.log("Failed to convert transcript data to string")
+                }
+            case .failure(let error):
+                Logger.shared.log("Error: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
 struct ChatView: View {
     @State private var messages: [ChatMessage] = []
-    @State private var inputText: String = ""
+    @StateObject private var viewModel = ChatViewModel()
     private var chatAPI: ChatAPI = ChatAPI()
     
     var body: some View {
@@ -45,12 +84,15 @@ struct ChatView: View {
                 }
             }
             
-            // Message Input
             HStack {
-                TextField("Type a message", text: $inputText)
+                TextField("Type a message", text: $viewModel.inputText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
+                Button(action: viewModel.toggleRecording) {
+                    Image(systemName: viewModel.audioRecorder.isRecording ? "mic.fill" : "mic")
+                }
+                .padding()
                 Button("Send") {
                     sendMessage { firstMessage in
                         if let message = firstMessage {
@@ -65,7 +107,7 @@ struct ChatView: View {
     }
     
     private func sendMessage(completion: @escaping (OpenAIMessage?) -> Void) {
-        let msg = OpenAIMessage(userContent: inputText)
+        let msg = OpenAIMessage(userContent: viewModel.inputText)
         let newMessage = ChatMessage(msg: msg)
         messages.append(newMessage)
         self.chatAPI.sendChat(messages: [msg]) { result in
