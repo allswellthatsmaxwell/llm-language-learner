@@ -136,6 +136,10 @@ struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     private var advisorChatAPI = AdvisorChatAPI()
     
+    private let fontSize = CGFloat(18)
+    private let entryButtonHeight = CGFloat(30)
+    private let entryButtonWidth = CGFloat(30)
+    
     private func sendMessage() {
         Logger.shared.log("History so far: \(self.messages.map { $0.content })")
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
@@ -166,10 +170,11 @@ struct ChatView: View {
                             .padding()
                             .background(Color.blue)
                             .cornerRadius(10)
+                            .font(.system(size: fontSize))
                         Button(action: {
                             viewModel.hearButtonTapped(for: message)
                         }) {
-                            Image(systemName: "speaker.3.fill")
+                            Image(systemName: "speaker.fill")
                         }
                     } else {
                         // AI message with a hear button
@@ -177,11 +182,12 @@ struct ChatView: View {
                             .padding()
                             .background(Color.gray)
                             .cornerRadius(10)
+                            .font(.system(size: fontSize))
                         
                         Button(action: {
                             viewModel.hearButtonTapped(for: message)
                         }) {
-                            Image(systemName: "speaker.3.fill")
+                            Image(systemName: "speaker.fill")
                         }
                         .padding()
                         
@@ -191,20 +197,52 @@ struct ChatView: View {
             }
             
             HStack {
-                TextField("", text: $viewModel.inputText, onCommit: sendMessage)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                ZStack(alignment: .topLeading) {
+                    if viewModel.inputText.isEmpty {
+                        Text("Placeholder") // Placeholder text
+                            .foregroundColor(.gray)
+                            .padding(.leading, 4)
+                            .padding(.top, 8)
+                    }
+                    TextEditor(text: $viewModel.inputText)
+                        .frame(minHeight: fontSize, maxHeight: 40)
+                        .padding(4)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray, lineWidth: 1)
+                        )
+                }
+                .font(.system(size: fontSize))
                 
-                    .padding()
                 
                 Button(action: viewModel.toggleRecording) {
                     Image(systemName: viewModel.audioRecorder.isRecording ? "mic.fill" : "mic")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: entryButtonWidth, height: entryButtonHeight)
+                        .padding() // Add padding to create a larger clickable area
+                        // .background(viewModel.audioRecorder.isRecording ? Color.red : Color.blue) // Optional: Change color when recording
+                        .foregroundColor(.white)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 1))
                 }
+                .buttonStyle(PlainButtonStyle())
                 
                 .padding()
                 
-                Button("Send") { sendMessage() }
+                Button(action: sendMessage) {
+                    Image(systemName: "paperplane.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: entryButtonWidth, height: entryButtonHeight)
+                        .padding() // Add padding to create a larger clickable area
+                        .foregroundColor(.white)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 1))
+                }
+                .buttonStyle(PlainButtonStyle())
                 
-                    .padding()
+                .padding()
             }
         }
     }
