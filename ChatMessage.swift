@@ -93,33 +93,21 @@ struct ChatConversation: Codable, Identifiable {
     
     static func loadAll() -> [ChatConversation] {
         let fileManager = FileManager.default
-        let fileURLs = try! fileManager.contentsOfDirectory(at: fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0], includingPropertiesForKeys: nil)
-        var chats = [ChatConversation]()
+        let fileURLs = try! fileManager.contentsOfDirectory(at: fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0], 
+                                                            includingPropertiesForKeys: nil)
+        var conversations = [ChatConversation]()
         for fileURL in fileURLs {
             if fileURL.lastPathComponent.hasSuffix("chatConversation") {
                 do {
                     let data = try Data(contentsOf: fileURL)
-                    chats.append(try JSONDecoder().decode(ChatConversation.self, from: data))
+                    conversations.append(try JSONDecoder().decode(ChatConversation.self, from: data))
                 } catch {
-                    Logger.shared.log("Error loading chat: \(error)")
+                    Logger.shared.log("Error loading conversation: \(error)")
                 }
             }
         }
-        return chats
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(UUID.self, forKey: .id)
-        messages = try container.decode([ChatMessage].self, forKey: .messages)
-        title = try container.decode(String.self, forKey: .title)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(messages, forKey: .messages)
-        try container.encode(title, forKey: .title)
+        Logger.shared.log("loadAll: loaded conversations: \(conversations)")
+        return conversations
     }
     
     private enum CodingKeys: String, CodingKey {

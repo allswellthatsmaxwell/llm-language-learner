@@ -223,6 +223,19 @@ struct ChatView: View {
     
     var body: some View {
         HStack {
+            ScrollView {
+                VStack(alignment: .leading) {
+                    ForEach(self.conversations, id: \.id) { conversation in
+                        Text(conversation.title)
+                            .padding()
+                            .onTapGesture {
+                                self.activeConversation = conversation
+                            }
+                    }
+                }
+            }
+            .frame(width: 200)
+            
             VStack {
                 List(self.activeConversation.messages) { message in
                     MessageBubble(
@@ -241,19 +254,6 @@ struct ChatView: View {
                     CircleIconButton(iconName: "paperplane.circle.fill", action: sendMessage, size: entryButtonSize)
                 }
             }
-            
-            ScrollView {
-                VStack(alignment: .leading) {
-                    ForEach(self.conversations, id: \.id) { conversation in
-                        Text(conversation.title)
-                            .padding()
-                            .onTapGesture {
-                                self.activeConversation = conversation
-                            }
-                    }
-                }
-            }
-            .frame(width: 200)
         }
     }
 }
