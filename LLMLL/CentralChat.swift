@@ -136,9 +136,25 @@ struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     private var advisorChatAPI = AdvisorChatAPI()
     
+    private func sendMessage() {
+        Logger.shared.log("History so far: \(self.messages.map { $0.content })")
+        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
+        self.messages.append(userMessage)
+        let allMessages = self.messages + [userMessage]
+        self.viewModel.inputText = ""
+        
+        self.advisorChatAPI.sendMessages(messages: allMessages) { firstMessage in
+            if let message = firstMessage {
+                Logger.shared.log("Received message: \(message.content)")
+                self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+            } else {
+                Logger.shared.log("No message received, or an error occurred")
+            }
+        }
+    }
+    
     var body: some View {
         VStack {
-            // Messages List
             List(messages) { message in
                 HStack {
                     if message.isUser {
@@ -172,7 +188,7 @@ struct ChatView: View {
             }
             
             HStack {
-                TextField("Type a message", text: $viewModel.inputText)
+                TextField("", text: $viewModel.inputText, onCommit: sendMessage)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
@@ -182,36 +198,9 @@ struct ChatView: View {
                 
                 .padding()
                 
-                Button("Send") {
-                    Logger.shared.log("History so far: \(messages.map { $0.content })")
-                    let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
-                    let allMessages = self.messages + [userMessage]
-                    self.advisorChatAPI.sendMessages(messages: allMessages) { firstMessage in
-                        if let message = firstMessage {
-                            Logger.shared.log("Received message: \(message.content)")
-                            self.messages.append(userMessage)
-                            self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
-                        } else {
-                            Logger.shared.log("No message received, or an error occurred")
-                        }
-                    }
-                }
+                Button("Send") { sendMessage() }
                 
                 .padding()
-                
-//                Button(action: {
-//                    if let lastMessage = self.messages.last {
-//                        Logger.shared.log("Speaker button: sending message: \(lastMessage.content)")
-//                        // convert AIMessage from the advisor context into a userMessage for this context
-//                        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: lastMessage.content))
-//                        viewModel.hearButtonTapped(for: userMessage)
-//                    }  else {
-//                        Logger.shared.log("No messages to use; messages is: \(self.messages)")
-//                    }
-//                }) {
-//                    Image(systemName: "speaker.3.fill")
-//                }
-//                .padding()
             }
         }
     }
