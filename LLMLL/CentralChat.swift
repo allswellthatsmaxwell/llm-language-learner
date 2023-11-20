@@ -137,8 +137,8 @@ struct ChatView: View {
     private var advisorChatAPI = AdvisorChatAPI()
     
     private let fontSize = CGFloat(18)
-    private let entryButtonHeight = CGFloat(30)
-    private let entryButtonWidth = CGFloat(30)
+    private let entryButtonSize = CGFloat(55)
+    private let listenButtonSize = CGFloat(30)
     
     private func sendMessage() {
         Logger.shared.log("History so far: \(self.messages.map { $0.content })")
@@ -174,8 +174,14 @@ struct ChatView: View {
                         Button(action: {
                             viewModel.hearButtonTapped(for: message)
                         }) {
-                            Image(systemName: "speaker.fill")
+                            Image(systemName: "speaker.circle")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: listenButtonSize, height: listenButtonSize)
+                                .foregroundColor(.white)
+                                .clipShape(Circle())
                         }
+                        .buttonStyle(PlainButtonStyle())
                     } else {
                         // AI message with a hear button
                         Text(message.content)
@@ -187,8 +193,14 @@ struct ChatView: View {
                         Button(action: {
                             viewModel.hearButtonTapped(for: message)
                         }) {
-                            Image(systemName: "speaker.fill")
+                            Image(systemName: "speaker.circle")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: listenButtonSize, height: listenButtonSize)
+                                .foregroundColor(.white)
+                                .clipShape(Circle())
                         }
+                        .buttonStyle(PlainButtonStyle())
                         .padding()
                         
                         Spacer() // Left-align AI messages
@@ -199,7 +211,7 @@ struct ChatView: View {
             HStack {
                 ZStack(alignment: .topLeading) {
                     if viewModel.inputText.isEmpty {
-                        Text("Placeholder") // Placeholder text
+                        Text("")
                             .foregroundColor(.gray)
                             .padding(.leading, 4)
                             .padding(.top, 8)
@@ -216,29 +228,26 @@ struct ChatView: View {
                 
                 
                 Button(action: viewModel.toggleRecording) {
-                    Image(systemName: viewModel.audioRecorder.isRecording ? "mic.fill" : "mic")
+                    Image(systemName: viewModel.audioRecorder.isRecording ? "mic.circle" : "mic.circle")
                         .resizable()
-                        .scaledToFit()
-                        .frame(width: entryButtonWidth, height: entryButtonHeight)
-                        .padding() // Add padding to create a larger clickable area
-                        // .background(viewModel.audioRecorder.isRecording ? Color.red : Color.blue) // Optional: Change color when recording
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: entryButtonSize, height: entryButtonSize)
+                    // .background(viewModel.audioRecorder.isRecording ? Color.red : Color.blue) // Optional: Change color when recording
                         .foregroundColor(.white)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 1))
+                        
                 }
                 .buttonStyle(PlainButtonStyle())
                 
                 .padding()
                 
                 Button(action: sendMessage) {
-                    Image(systemName: "paperplane.fill")
+                    Image(systemName: "paperplane.circle")
                         .resizable()
-                        .scaledToFit()
-                        .frame(width: entryButtonWidth, height: entryButtonHeight)
-                        .padding() // Add padding to create a larger clickable area
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: entryButtonSize, height: entryButtonSize)
                         .foregroundColor(.white)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 1))
                 }
                 .buttonStyle(PlainButtonStyle())
                 
