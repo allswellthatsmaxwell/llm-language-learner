@@ -35,6 +35,80 @@ struct ChatResult: Codable {
     let comments: String
 }
 
+struct CircleIconButton: View {
+    let iconName: String
+    let action: () -> Void
+    let size: CGFloat
+    
+    init(iconName: String, action: @escaping () -> Void, size: CGFloat) {
+        self.iconName = iconName
+        self.action = action
+        self.size = size
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: iconName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+                .foregroundColor(.white)
+                .clipShape(Circle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding()
+    }
+}
+
+struct MessageBubble: View {
+    let message: ChatMessage
+    let action: () -> Void
+    let fontSize: CGFloat
+    private let listenButtonSize = CGFloat(30)
+    
+    var body: some View {
+        HStack {
+            if self.message.isUser { Spacer() } // Right-align user messages
+            
+            Text(self.message.content)
+                .padding()
+                .background(self.message.isUser ? Color.blue : Color.gray)
+                .cornerRadius(10)
+                .font(.system(size: self.fontSize))
+            
+            if !self.message.isUser { Spacer() } // Left-align AI messages
+            CircleIconButton(iconName: "speaker.circle",
+                             action: self.action,
+                             size: self.listenButtonSize)
+        }
+    }
+}
+
+struct CustomTextEditor: View {
+    @Binding var text: String
+    var placeholder: String
+    var fontSize: CGFloat
+    
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            if text.isEmpty {
+                Text(placeholder)
+                    .foregroundColor(.gray)
+                    .padding(.leading, 4)
+                    .padding(.top, 8)
+            }
+            TextEditor(text: $text)
+                .frame(minHeight: fontSize, maxHeight: 40)
+                .padding(4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray, lineWidth: 1)
+                )
+        }
+        .font(.system(size: fontSize))
+    }
+}
+
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     var audioRecorder = AudioRecorder()
@@ -131,88 +205,13 @@ class ChatViewModel: ObservableObject {
     }
 }
 
-struct CircleIconButton: View {
-    let iconName: String
-    let action: () -> Void
-    let size: CGFloat
-
-    init(iconName: String, action: @escaping () -> Void, size: CGFloat) {
-        self.iconName = iconName
-        self.action = action
-        self.size = size
-    }
-    
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: iconName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
-                .foregroundColor(.white)
-                .clipShape(Circle())
-        }
-        .buttonStyle(PlainButtonStyle())
-        .padding()
-    }
-}
-
-struct MessageBubble: View {
-    let message: ChatMessage
-    let action: () -> Void
-    let iconSize: CGFloat
-    let fontSize: CGFloat
-    
-    var body: some View {
-        HStack {
-            if self.message.isUser { Spacer() } // Right-align user messages
-            
-            Text(self.message.content)
-                .padding()
-                .background(self.message.isUser ? Color.blue : Color.gray)
-                .cornerRadius(10)
-                .font(.system(size: self.fontSize))
-            
-            if !self.message.isUser { Spacer() } // Left-align AI messages
-            CircleIconButton(iconName: "speaker.circle",
-                             action: self.action,
-                             size: self.iconSize)
-        }
-    }
-}
-
-struct CustomTextEditor: View {
-    @Binding var text: String
-    var placeholder: String
-    var fontSize: CGFloat
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            if text.isEmpty {
-                Text(placeholder)
-                    .foregroundColor(.gray)
-                    .padding(.leading, 4)
-                    .padding(.top, 8)
-            }
-            TextEditor(text: $text)
-                .frame(minHeight: fontSize, maxHeight: 40)
-                .padding(4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray, lineWidth: 1)
-                )
-        }
-        .font(.system(size: fontSize))
-    }
-}
 
 struct ChatView: View {
     @State private var messages: [ChatMessage] = []
     @StateObject private var viewModel = ChatViewModel()
     private var advisorChatAPI = AdvisorChatAPI()
-    
-    private let fontSize = CGFloat(18)
-    private let listenButtonSize = CGFloat(30)
     private let entryButtonSize = CGFloat(55)
+    private let fontSize = CGFloat(18)
     
     private func sendMessage() {
         Logger.shared.log("History so far: \(self.messages.map { $0.content })")
@@ -238,10 +237,9 @@ struct ChatView: View {
         VStack {
             List(messages) { message in
                 MessageBubble(
-                        message: message,
-                        action: { viewModel.hearButtonTapped(for: message) },
-                        iconSize: entryButtonSize,
-                        fontSize: fontSize)
+                    message: message,
+                    action: { viewModel.hearButtonTapped(for: message) },
+                    fontSize: self.fontSize)
             }
             
             HStack {
