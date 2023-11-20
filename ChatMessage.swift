@@ -18,7 +18,6 @@ struct ChatMessage: Identifiable, Codable {
     enum CodingKeys: CodingKey {
         case id, openAIMessage, isUser, content, audioFilename
     }
-
     
     init(msg: OpenAIMessage) {
         self.id = UUID()
@@ -46,6 +45,7 @@ struct ChatMessage: Identifiable, Codable {
         try container.encode(audioFilename, forKey: .audioFilename)
     }
 }
+
 
 class ChatConversation: Codable, Identifiable {
     let id: UUID
@@ -87,6 +87,23 @@ class ChatConversation: Codable, Identifiable {
             Logger.shared.log("Error loading chat: \(error)")
             return nil
         }
+    }
+    
+    static func loadAll() -> [ChatConversation] {
+        let fileManager = FileManager.default
+        let fileURLs = try! fileManager.contentsOfDirectory(at: fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0], includingPropertiesForKeys: nil)
+        var chats = [ChatConversation]()
+        for fileURL in fileURLs {
+            if fileURL.lastPathComponent.hasSuffix("chatConversation") {
+                do {
+                    let data = try Data(contentsOf: fileURL)
+                    chats.append(try JSONDecoder().decode(ChatConversation.self, from: data))
+                } catch {
+                    Logger.shared.log("Error loading chat: \(error)")
+                }
+            }
+        }
+        return chats
     }
     
     required init(from decoder: Decoder) throws {
