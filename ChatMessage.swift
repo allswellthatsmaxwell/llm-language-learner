@@ -54,14 +54,19 @@ struct ChatConversation: Codable, Identifiable {
     private let fileManager = FileManager.default
     
     init(messages: [ChatMessage]) {
-        self.id = UUID()
+        #if DEBUG
+        let id = getPersistentUUID(key: "700-of-770")
+        #else
+        let id = UUID()
+        #endif
+        self.id = id
         self.messages = messages
         self.title = "Title \(id)"
     }
     
     private var fileURL: URL {
         fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("\(id).chatConversation.json")
+            .appendingPathComponent("\(self.id).chatConversation.json")
     }
     
     mutating func append(_ message: ChatMessage) {
@@ -97,7 +102,7 @@ struct ChatConversation: Codable, Identifiable {
                                                             includingPropertiesForKeys: nil)
         var conversations = [ChatConversation]()
         for fileURL in fileURLs {
-            if fileURL.lastPathComponent.hasSuffix("chatConversation") {
+            if fileURL.lastPathComponent.hasSuffix("chatConversation.json") {
                 do {
                     let data = try Data(contentsOf: fileURL)
                     conversations.append(try JSONDecoder().decode(ChatConversation.self, from: data))
@@ -112,8 +117,21 @@ struct ChatConversation: Codable, Identifiable {
     
     private enum CodingKeys: String, CodingKey {
         case id, messages, title
+
     }
 }
 
 
+func getPersistentUUID(key: String) -> UUID {
+    if let uuidString = UserDefaults.standard.string(forKey: key),
+       let uuid = UUID(uuidString: uuidString) {
+        Logger.shared.log("getPersistentUUID branch 1: UUID: \(uuid)")
+        return uuid
+    } else {
+        let uuid = UUID()
+        UserDefaults.standard.set(uuid.uuidString, forKey: key)
+        Logger.shared.log("getPersistentUUID branch 2: UUID: \(uuid)")
+        return uuid
+    }
+}
 

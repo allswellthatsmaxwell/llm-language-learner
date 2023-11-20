@@ -211,7 +211,8 @@ struct ChatView: View {
             DispatchQueue.main.async {
                 if let message = firstMessage {
                     Logger.shared.log("Received message: \(message.content)")
-                    self.activeConversation.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                    self.activeConversation.messages.append(
+                        ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
                     self.activeConversation.save()
                 } else {
                     Logger.shared.log("No message received, or an error occurred")

@@ -471,13 +471,15 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LLMLL/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Recording when the user speaks allows the app to transcribe their sentence and correct it if it's ungrammatical.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "To listen to and correct the language you'd like to learn.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
+				NEW_SETTING = "";
+				OTHER_CFLAGS = "\"-D DEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -500,13 +502,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LLMLL/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Recording when the user speaks allows the app to transcribe their sentence and correct it if it's ungrammatical.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "To listen to and correct the language you'd like to learn.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
+				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = maxima.LLMLL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
