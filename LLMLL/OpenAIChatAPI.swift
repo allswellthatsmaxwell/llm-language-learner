@@ -68,7 +68,8 @@ class ChatAPI: OpenAIAPI {
         do {
             let requestBody: [String: Any] = [
                 "model": "gpt-3.5-turbo-1106", // "gpt-4-1106-preview",
-                "messages": messageDicts            ]
+                "messages": messageDicts
+            ]
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             submitRequest(request: request, completion: completion)
         } catch {

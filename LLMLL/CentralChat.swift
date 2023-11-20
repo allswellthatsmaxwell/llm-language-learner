@@ -10,20 +10,6 @@ import SwiftUI
 import SwiftData
 import AVFoundation
 
-struct ChatMessage: Identifiable {
-    let id = UUID()
-    var openAIMessage: OpenAIMessage
-    var isUser: Bool // True for user messages, false for bot messages
-    let content: String
-    let audioFilename: String
-    
-    init(msg: OpenAIMessage) {
-        self.openAIMessage = msg
-        self.isUser = msg.isUser
-        self.content = msg.content
-        self.audioFilename = "\(id).mp3"
-    }
-}
 
 struct TranscriptionResult: Codable {
     let text: String
@@ -207,24 +193,24 @@ class ChatViewModel: ObservableObject {
 
 
 struct ChatView: View {
-    @State private var messages: [ChatMessage] = []
+    @State private var conversation = ChatConversation(messages: [])
     @StateObject private var viewModel = ChatViewModel()
     private var advisorChatAPI = AdvisorChatAPI()
     private let entryButtonSize = CGFloat(55)
     private let fontSize = CGFloat(18)
     
     private func sendMessage() {
-        Logger.shared.log("History so far: \(self.messages.map { $0.content })")
+        Logger.shared.log("History so far: \(self.conversation.messages.map { $0.content })")
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
-        self.messages.append(userMessage)
-        let allMessages = self.messages + [userMessage]
+        self.conversation.append(userMessage)
         DispatchQueue.main.async { self.viewModel.inputText = "" }
         
-        self.advisorChatAPI.sendMessages(messages: allMessages) { firstMessage in
+        self.advisorChatAPI.sendMessages(messages: self.conversation.messages) { firstMessage in
             DispatchQueue.main.async {
                 if let message = firstMessage {
                     Logger.shared.log("Received message: \(message.content)")
-                    self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                    self.conversation.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                    self.conversation.save()
                 } else {
                     Logger.shared.log("No message received, or an error occurred")
                 }
@@ -235,7 +221,7 @@ struct ChatView: View {
     
     var body: some View {
         VStack {
-            List(messages) { message in
+            List(self.conversation.messages) { message in
                 MessageBubble(
                     message: message,
                     action: { viewModel.hearButtonTapped(for: message) },

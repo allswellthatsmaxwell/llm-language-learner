@@ -12,6 +12,7 @@
 		5B46BD872B0741920037BBC3 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD862B0741920037BBC3 /* Logger.swift */; };
 		5B46BD892B096B260037BBC3 /* CentralChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD882B096B260037BBC3 /* CentralChat.swift */; };
 		5B46BD8B2B0971D50037BBC3 /* OpenAIChatAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD8A2B0971D50037BBC3 /* OpenAIChatAPI.swift */; };
+		5B46BD8D2B0BD45F0037BBC3 /* ChatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD8C2B0BD45F0037BBC3 /* ChatMessage.swift */; };
 		5BFE3D5B2B06E43A00203EB3 /* LLMLLApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */; };
 		5BFE3D5D2B06E43A00203EB3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */; };
 		5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5E2B06E43A00203EB3 /* Item.swift */; };
@@ -48,6 +49,7 @@
 		5B46BD862B0741920037BBC3 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		5B46BD882B096B260037BBC3 /* CentralChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CentralChat.swift; sourceTree = "<group>"; };
 		5B46BD8A2B0971D50037BBC3 /* OpenAIChatAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIChatAPI.swift; sourceTree = "<group>"; };
+		5B46BD8C2B0BD45F0037BBC3 /* ChatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = SOURCE_ROOT; };
 		5BFE3D572B06E43A00203EB3 /* LLMLL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LLMLL.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMLLApp.swift; sourceTree = "<group>"; };
 		5BFE3D5C2B06E43A00203EB3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -114,6 +116,7 @@
 		5BFE3D592B06E43A00203EB3 /* LLMLL */ = {
 			isa = PBXGroup;
 			children = (
+				5B46BD8C2B0BD45F0037BBC3 /* ChatMessage.swift */,
 				5B422AEC2B0728DE00BC9FB4 /* Info.plist */,
 				5B46BD842B07323B0037BBC3 /* AudioPlayer.swift */,
 				5B422AE92B0718B800BC9FB4 /* AudioRecorder.swift */,
@@ -291,6 +294,7 @@
 				5BFE3D8D2B070AF000203EB3 /* OpenAIAPI.swift in Sources */,
 				5BFE3D5D2B06E43A00203EB3 /* ContentView.swift in Sources */,
 				5B46BD8B2B0971D50037BBC3 /* OpenAIChatAPI.swift in Sources */,
+				5B46BD8D2B0BD45F0037BBC3 /* ChatMessage.swift in Sources */,
 				5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */,
 				5BFE3D5B2B06E43A00203EB3 /* LLMLLApp.swift in Sources */,
 				5B46BD872B0741920037BBC3 /* Logger.swift in Sources */,
