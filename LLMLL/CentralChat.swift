@@ -193,24 +193,26 @@ class ChatViewModel: ObservableObject {
 
 
 struct ChatView: View {
-    @State private var conversation = ChatConversation(messages: [])
+    @State private var activeConversation = ChatConversation(messages: [])
+    @State private var conversations: [ChatConversation] = ChatConversation.loadAll()
+    
     @StateObject private var viewModel = ChatViewModel()
     private var advisorChatAPI = AdvisorChatAPI()
     private let entryButtonSize = CGFloat(55)
     private let fontSize = CGFloat(18)
     
     private func sendMessage() {
-        Logger.shared.log("History so far: \(self.conversation.messages.map { $0.content })")
+        Logger.shared.log("History so far: \(self.activeConversation.messages.map { $0.content })")
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
-        self.conversation.append(userMessage)
+        self.activeConversation.append(userMessage)
         DispatchQueue.main.async { self.viewModel.inputText = "" }
         
-        self.advisorChatAPI.sendMessages(messages: self.conversation.messages) { firstMessage in
+        self.advisorChatAPI.sendMessages(messages: self.activeConversation.messages) { firstMessage in
             DispatchQueue.main.async {
                 if let message = firstMessage {
                     Logger.shared.log("Received message: \(message.content)")
-                    self.conversation.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
-                    self.conversation.save()
+                    self.activeConversation.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                    self.activeConversation.save()
                 } else {
                     Logger.shared.log("No message received, or an error occurred")
                 }
@@ -220,23 +222,38 @@ struct ChatView: View {
     }
     
     var body: some View {
-        VStack {
-            List(self.conversation.messages) { message in
-                MessageBubble(
-                    message: message,
-                    action: { viewModel.hearButtonTapped(for: message) },
-                    fontSize: self.fontSize)
+        HStack {
+            VStack {
+                List(self.activeConversation.messages) { message in
+                    MessageBubble(
+                        message: message,
+                        action: { viewModel.hearButtonTapped(for: message) },
+                        fontSize: self.fontSize)
+                }
+                
+                HStack {
+                    CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize)
+                    
+                    CircleIconButton(iconName: viewModel.audioRecorder.isRecording ? "mic.circle.fill" : "mic.circle",
+                                     action: viewModel.toggleRecording,
+                                     size: entryButtonSize)
+                    
+                    CircleIconButton(iconName: "paperplane.circle.fill", action: sendMessage, size: entryButtonSize)
+                }
             }
             
-            HStack {
-                CustomTextEditor(text: $viewModel.inputText, placeholder: "Type your message here", fontSize: fontSize)
-                
-                CircleIconButton(iconName: viewModel.audioRecorder.isRecording ? "mic.circle.fill" : "mic.circle",
-                                 action: viewModel.toggleRecording,
-                                 size: entryButtonSize)
-                
-                CircleIconButton(iconName: "paperplane.circle.fill", action: sendMessage, size: entryButtonSize)
+            ScrollView {
+                VStack(alignment: .leading) {
+                    ForEach(self.conversations, id: \.id) { conversation in
+                        Text(conversation.title)
+                            .padding()
+                            .onTapGesture {
+                                self.activeConversation = conversation
+                            }
+                    }
+                }
             }
+            .frame(width: 200)
         }
     }
 }

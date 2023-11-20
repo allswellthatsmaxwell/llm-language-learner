@@ -20,11 +20,11 @@ struct ChatMessage: Identifiable, Codable {
     }
     
     init(msg: OpenAIMessage) {
-        self.id = UUID()
-        self.openAIMessage = msg
-        self.isUser = msg.isUser
-        self.content = msg.content
-        self.audioFilename = "\(id).mp3"
+        id = UUID()
+        openAIMessage = msg
+        isUser = msg.isUser
+        content = msg.content
+        audioFilename = "\(id).mp3"
     }
     
     init(from decoder: Decoder) throws {
@@ -47,14 +47,16 @@ struct ChatMessage: Identifiable, Codable {
 }
 
 
-class ChatConversation: Codable, Identifiable {
+struct ChatConversation: Codable, Identifiable {
     let id: UUID
     var messages: [ChatMessage]
+    var title: String
     private let fileManager = FileManager.default
     
     init(messages: [ChatMessage]) {
         self.id = UUID()
         self.messages = messages
+        self.title = "Title \(id)"
     }
     
     private var fileURL: URL {
@@ -62,8 +64,8 @@ class ChatConversation: Codable, Identifiable {
             .appendingPathComponent("\(id).chatConversation.json")
     }
     
-    func append(_ message: ChatMessage) {
-        messages.append(message)
+    mutating func append(_ message: ChatMessage) {
+        self.messages.append(message)
     }
     
     func save() {
@@ -78,8 +80,8 @@ class ChatConversation: Codable, Identifiable {
     static func load(from chatId: UUID) -> ChatConversation? {
         let fileManager = FileManager.default
         let fileURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                        .appendingPathComponent("\(chatId).chatConversation.json")
-
+            .appendingPathComponent("\(chatId).chatConversation.json")
+        
         do {
             let data = try Data(contentsOf: fileURL)
             return try JSONDecoder().decode(ChatConversation.self, from: data)
@@ -106,15 +108,23 @@ class ChatConversation: Codable, Identifiable {
         return chats
     }
     
-    required init(from decoder: Decoder) throws {
-           let container = try decoder.container(keyedBy: CodingKeys.self)
-           id = try container.decode(UUID.self, forKey: .id)
-           messages = try container.decode([ChatMessage].self, forKey: .messages)
-       }
-
-       private enum CodingKeys: String, CodingKey {
-           case id, messages
-       }
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        messages = try container.decode([ChatMessage].self, forKey: .messages)
+        title = try container.decode(String.self, forKey: .title)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(messages, forKey: .messages)
+        try container.encode(title, forKey: .title)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, messages, title
+    }
 }
 
 
