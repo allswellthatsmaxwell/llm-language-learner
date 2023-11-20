@@ -141,16 +141,19 @@ struct ChatView: View {
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
         self.messages.append(userMessage)
         let allMessages = self.messages + [userMessage]
-        self.viewModel.inputText = ""
+        DispatchQueue.main.async { self.viewModel.inputText = "" }
         
         self.advisorChatAPI.sendMessages(messages: allMessages) { firstMessage in
-            if let message = firstMessage {
-                Logger.shared.log("Received message: \(message.content)")
-                self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
-            } else {
-                Logger.shared.log("No message received, or an error occurred")
+            DispatchQueue.main.async {
+                if let message = firstMessage {
+                    Logger.shared.log("Received message: \(message.content)")
+                    self.messages.append(ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                } else {
+                    Logger.shared.log("No message received, or an error occurred")
+                }
             }
         }
+        self.viewModel.inputText = ""
     }
     
     var body: some View {
@@ -190,6 +193,7 @@ struct ChatView: View {
             HStack {
                 TextField("", text: $viewModel.inputText, onCommit: sendMessage)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                
                     .padding()
                 
                 Button(action: viewModel.toggleRecording) {
@@ -200,7 +204,7 @@ struct ChatView: View {
                 
                 Button("Send") { sendMessage() }
                 
-                .padding()
+                    .padding()
             }
         }
     }
