@@ -7,56 +7,50 @@
 
 import Foundation
 
+private let conversationFileExtension = "chatConversation.json"
+
 
 struct ChatConversation: Codable, Identifiable {
     let id: UUID
     var messages: [ChatMessage]
     var title: String
-    var timestamp: Double // 11/21 9am: if I make these two variables ? then it conforms to Decodable..?
-    // we should use timestamp as the ID somehow, instead of the UUID, but need it to be int or str then, not double.
+    var timestamp: Double
     var isNew: Bool
     
     init(messages: [ChatMessage]) {
-        #if DEBUG
-        let id = getPersistentUUID(key: "700-of-770")
-        #else
-        let id = UUID()
-        #endif
-        self.id = id
+        self.id = UUID()
         self.messages = messages
         self.title = "Title \(id)"
         self.timestamp = Date().timeIntervalSince1970
         self.isNew = true
     }
     
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.messages = try container.decode([ChatMessage].self, forKey: .messages)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.timestamp = try container.decode(Double.self, forKey: .timestamp)
+        self.isNew = false
+    }
+    
     private var fileURL: URL {
-        return getDocumentsDirectory().appendingPathComponent("\(self.timestamp).chatConversation.json")
+        return getDocumentsDirectory().appendingPathComponent("\(self.timestamp).\(conversationFileExtension)")
     }
     
     mutating func append(_ message: ChatMessage) {
         self.messages.append(message)
     }
-
+    
     func save() {
         do {
+            if self.isNew {
+                // ?
+            }
             let data = try JSONEncoder().encode(self)
             try data.write(to: self.fileURL)
         } catch {
             Logger.shared.log("Error saving chat: \(error)")
-        }
-    }
-    
-    static func load(from chatId: UUID) -> ChatConversation? {
-        let fileManager = FileManager.default
-        let fileURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("\(chatId).chatConversation.json")
-        
-        do {
-            let data = try Data(contentsOf: fileURL)
-            return try JSONDecoder().decode(ChatConversation.self, from: data)
-        } catch {
-            Logger.shared.log("Error loading chat: \(error)")
-            return nil
         }
     }
     
@@ -93,22 +87,14 @@ struct ChatConversation: Codable, Identifiable {
         return conversations
     }
     
-    private enum CodingKeys: String, CodingKey {
-        case id, messages, title
-    }
-}
-
-
-func getPersistentUUID(key: String) -> UUID {
-    if let uuidString = UserDefaults.standard.string(forKey: key),
-       let uuid = UUID(uuidString: uuidString) {
-        Logger.shared.log("getPersistentUUID branch 1: UUID: \(uuid)")
-        return uuid
-    } else {
-        let uuid = UUID()
-        UserDefaults.standard.set(uuid.uuidString, forKey: key)
-        Logger.shared.log("getPersistentUUID branch 2: UUID: \(uuid)")
-        return uuid
+    func generateUniqueFilename() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMddHHmmss"
+        let timestamp = dateFormatter.string(from: Date())
+        
+        let uuid = UUID().uuidString
+        
+        return "conversation_\(timestamp)_\(uuid).\(conversationFileExtension)"
     }
 }
 
