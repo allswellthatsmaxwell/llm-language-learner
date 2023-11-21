@@ -74,7 +74,7 @@ class TextToSpeechAPI: OpenAIAPI {
     }
     
     func synthesizeSpeech(from text: String, completion: @escaping (Result<Data, Error>) -> Void) {
-        guard var request = constructRequest(url: url) else { return }
+        guard var request = self.constructRequest(url: url) else { return }
         
         do {
             request.httpBody = try JSONSerialization.data(
@@ -88,7 +88,7 @@ class TextToSpeechAPI: OpenAIAPI {
             return
         }
         
-        submitRequest(request: request, completion: completion)
+        self.submitRequest(request: request, completion: completion)
     }
 }
 
@@ -138,7 +138,7 @@ class TranscriptionAPI: OpenAIAPI {
         
         request.httpBody = httpBody as Data
         
-        submitRequest(request: request, completion: completion)
+        self.submitRequest(request: request, completion: completion)
     }
 }
 

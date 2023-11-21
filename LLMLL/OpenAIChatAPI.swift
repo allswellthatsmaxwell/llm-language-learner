@@ -16,14 +16,14 @@ class OpenAIMessage: Codable {
     init(role: String, content: String) {
         self.role = role
         self.content = content
-        isUser = role == "user"
+        self.isUser = role == "user"
     }
     
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        role = try container.decode(String.self, forKey: .role)
-        content = try container.decode(String.self, forKey: .content)
-        isUser = role == "user"
+        self.role = try container.decode(String.self, forKey: .role)
+        self.content = try container.decode(String.self, forKey: .content)
+        self.isUser = role == "user"
     }
     
     convenience init(userContent: String) {
@@ -77,16 +77,13 @@ class ChatAPI: OpenAIAPI {
         }
     }
     
-    func sendMessages(messages: [ChatMessage], completion: @escaping (OpenAIMessage?) -> Void) {
-        self.getChatCompletionResponse(messages: messages.map { $0.openAIMessage }) { result in
+    func sendMessages(messages: [OpenAIMessage], completion: @escaping (OpenAIMessage?) -> Void) {
+        self.getChatCompletionResponse(messages: messages) { result in
             switch result {
             case .success(let data):
                 do {
-                    // Logger.shared.log("sendMessages response data: \(String(data: data, encoding: .utf8) ?? "No data")")
                     let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-                    // Logger.shared.log("Response: \(response)")
                     if let firstMessage = response.choices.first?.message {
-                        // Logger.shared.log("Message: \(firstMessage.content)")
                         return completion(firstMessage)
                     } else {
                         Logger.shared.log("No messages found in response")

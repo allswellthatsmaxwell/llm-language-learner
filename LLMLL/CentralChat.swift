@@ -160,7 +160,7 @@ class ChatViewModel: ObservableObject {
         } else {
             Logger.shared.log("Audio file does not exist, extracting foreign text")
             // extract foreign text from the message
-            self.extractorChatAPI.sendMessages(messages: [message]) { firstMessage in
+            self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
                 guard let message = firstMessage else {
                     Logger.shared.log("extractor/speaker: No message received, or an error occurred")
                     return
@@ -234,7 +234,8 @@ struct ChatView: View {
         self.activeConversation.append(userMessage)
         DispatchQueue.main.async { self.viewModel.inputText = "" }
         
-        self.advisorChatAPI.sendMessages(messages: self.activeConversation.messages) { firstMessage in
+        let openAIMessages = self.activeConversation.messages.map { $0.openAIMessage }
+        self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
             DispatchQueue.main.async {
                 if let message = firstMessage {
                     Logger.shared.log("Received message: \(message.content)")

@@ -7,6 +7,7 @@
 
 import Foundation
 
+
 struct ChatConversation: Codable, Identifiable {
     let id: UUID
     var messages: [ChatMessage]
