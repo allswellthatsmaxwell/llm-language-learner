@@ -241,6 +241,11 @@ struct ChatView: View {
                     Logger.shared.log("Received message: \(message.content)")
                     self.activeConversation.messages.append(
                         ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                    if self.activeConversation.isNew { 
+                        setMetadata(conversation: self.activeConversation) { updatedConversation in
+                            self.activeConversation = updatedConversation
+                        }
+                    }
                     self.activeConversation.save()
                 } else {
                     Logger.shared.log("No message received, or an error occurred")

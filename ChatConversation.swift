@@ -12,8 +12,9 @@ struct ChatConversation: Codable, Identifiable {
     let id: UUID
     var messages: [ChatMessage]
     var title: String
-    private var timestamp: Double?
-    private var TitlerChatAPI = TitlerChatAPI()
+    var timestamp: Double // 11/21 9am: if I make these two variables ? then it conforms to Decodable..?
+    // we should use timestamp as the ID somehow, instead of the UUID, but need it to be int or str then, not double.
+    var isNew: Bool
     
     init(messages: [ChatMessage]) {
         #if DEBUG
@@ -24,25 +25,18 @@ struct ChatConversation: Codable, Identifiable {
         self.id = id
         self.messages = messages
         self.title = "Title \(id)"
+        self.timestamp = Date().timeIntervalSince1970
+        self.isNew = true
     }
     
     private var fileURL: URL {
-        return getDocumentsDirectory().appendingPathComponent("\(self.id).chatConversation.json")
+        return getDocumentsDirectory().appendingPathComponent("\(self.timestamp).chatConversation.json")
     }
     
     mutating func append(_ message: ChatMessage) {
         self.messages.append(message)
     }
-    
-    func isNew() -> Bool {
-        return self.timestamp == nil
-    }
-    
-    mutating func setupMetadata() {
-        self.timestamp = Date().timeIntervalSince1970
-        
-    }
-    
+
     func save() {
         do {
             let data = try JSONEncoder().encode(self)
@@ -63,6 +57,20 @@ struct ChatConversation: Codable, Identifiable {
         } catch {
             Logger.shared.log("Error loading chat: \(error)")
             return nil
+        }
+    }
+    
+    func generateTitle(completion: @escaping (String) -> Void) {
+        let TitlerChatAPI = TitlerChatAPI()
+        let openAIMessages = self.messages.map { $0.openAIMessage }
+        TitlerChatAPI.sendMessages(messages: openAIMessages) { result in
+            if let result = result {
+                Logger.shared.log("generateTitle: \(result.content)")
+                completion(result.content)
+            } else {
+                Logger.shared.log("Titler: No message received, or an error occurred")
+                completion("New chat")
+            }
         }
     }
     
@@ -87,7 +95,6 @@ struct ChatConversation: Codable, Identifiable {
     
     private enum CodingKeys: String, CodingKey {
         case id, messages, title
-
     }
 }
 
@@ -105,3 +112,12 @@ func getPersistentUUID(key: String) -> UUID {
     }
 }
 
+
+func setMetadata(conversation: ChatConversation, completion: @escaping (ChatConversation) -> Void) {
+    conversation.generateTitle() { newTitle in
+        var updatedConversation = conversation
+        updatedConversation.title = newTitle
+        completion(updatedConversation)
+        updatedConversation.timestamp = Date().timeIntervalSince1970
+    }
+}

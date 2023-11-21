@@ -46,12 +46,12 @@ class OpenAIAPI {
         var request = URLRequest(url: apiUrl)
         request.httpMethod = "POST"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        addContentType(&request)
+        self.addContentType(&request)
         return request
     }
     
     func submitRequest(request: URLRequest, completion: @escaping (Result<Data, Error>) -> Void) {
-        session.dataTask(with: request) { data, response, error in
+        self.session.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -117,16 +117,16 @@ class TranscriptionAPI: OpenAIAPI {
     }
     
     func transcribe(fileURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
-        guard var request = constructRequest(url: url) else { return }
+        guard var request = self.constructRequest(url: url) else { return }
         
         let httpBody = NSMutableData()
         
         // Append file data
-        httpBody.append(convertFileData(fieldName: "file",
-                                        fileName: fileURL.lastPathComponent,
-                                        mimeType: "audio/x-m4a",
-                                        fileURL: fileURL,
-                                        using: boundary))
+        httpBody.append(self.convertFileData(fieldName: "file",
+                                             fileName: fileURL.lastPathComponent,
+                                             mimeType: "audio/x-m4a",
+                                             fileURL: fileURL,
+                                             using: boundary))
         
         // Append model parameter
         httpBody.appendString("--\(boundary)\r\n")
