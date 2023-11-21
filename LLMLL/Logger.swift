@@ -17,7 +17,6 @@ class Logger {
         let docsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         logFileURL = docsDirectory.appendingPathComponent("appLog.txt")
 
-        // Create a log file if it doesn't exist
         if !fileManager.fileExists(atPath: logFileURL.path) {
             fileManager.createFile(atPath: logFileURL.path, contents: nil)
         }
@@ -38,4 +37,10 @@ class Logger {
             print("Failed to open file handle")
         }
     }
+}
+
+
+func getDocumentsDirectory() -> URL {
+    let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    return paths[0]
 }

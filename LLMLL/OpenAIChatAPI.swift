@@ -140,3 +140,13 @@ Don't extract any English. Return only the Hangul you extract, with no additiona
     }
 }
 
+
+class TitlerChatAPI: ChatAPI {
+    override var systemPrompt: String {
+        return """
+The user will give you a conversation about the Korean language. Return a good, succinct title for the conversation. This is \
+in the context of a Korean-learning app, so don't include concepts like "learning" or "Korean" in the title.
+"""
+    }
+}
+

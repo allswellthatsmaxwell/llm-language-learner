@@ -148,7 +148,7 @@ class ChatViewModel: ObservableObject {
     
     func hearButtonTapped(for message: ChatMessage) {
         let fileManager = FileManager.default
-        let audioFilePath = self.documentsDirectory.appendingPathComponent(message.audioFilename)
+        let audioFilePath = getDocumentsDirectory().appendingPathComponent(message.audioFilename)
         
         if fileManager.fileExists(atPath: audioFilePath.path) {
             do {
@@ -183,11 +183,6 @@ class ChatViewModel: ObservableObject {
             }
         }
     }
-    
-    private var documentsDirectory: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
-    
     
     private func playAudio(from data: Data) {
         do {

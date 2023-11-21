@@ -20,10 +20,6 @@ class AudioPlayerManager {
             Logger.shared.log("Failed to play audio: \(error)")
         }
     }
-
-    private func getDocumentsDirectory() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
 }
 
 
