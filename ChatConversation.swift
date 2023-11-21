@@ -14,15 +14,18 @@ struct ChatConversation: Codable, Identifiable {
     let id: UUID
     var messages: [ChatMessage]
     var title: String
-    var timestamp: Double
+    private let timestamp: Double
     var isNew: Bool
+    private let fileURL: URL
     
     init(messages: [ChatMessage]) {
         self.id = UUID()
         self.messages = messages
-        self.title = "Title \(id)"
+        self.title = "New chat"
         self.timestamp = Date().timeIntervalSince1970
         self.isNew = true
+        
+        self.fileURL = getDocumentsDirectory().appendingPathComponent(generateUniqueFilename())
     }
     
     init(from decoder: Decoder) throws {
@@ -32,10 +35,7 @@ struct ChatConversation: Codable, Identifiable {
         self.title = try container.decode(String.self, forKey: .title)
         self.timestamp = try container.decode(Double.self, forKey: .timestamp)
         self.isNew = false
-    }
-    
-    private var fileURL: URL {
-        return getDocumentsDirectory().appendingPathComponent("\(self.timestamp).\(conversationFileExtension)")
+        self.fileURL = try container.decode(URL.self, forKey: .fileURL)
     }
     
     mutating func append(_ message: ChatMessage) {
@@ -44,27 +44,10 @@ struct ChatConversation: Codable, Identifiable {
     
     func save() {
         do {
-            if self.isNew {
-                // ?
-            }
             let data = try JSONEncoder().encode(self)
             try data.write(to: self.fileURL)
         } catch {
             Logger.shared.log("Error saving chat: \(error)")
-        }
-    }
-    
-    func generateTitle(completion: @escaping (String) -> Void) {
-        let TitlerChatAPI = TitlerChatAPI()
-        let openAIMessages = self.messages.map { $0.openAIMessage }
-        TitlerChatAPI.sendMessages(messages: openAIMessages) { result in
-            if let result = result {
-                Logger.shared.log("generateTitle: \(result.content)")
-                completion(result.content)
-            } else {
-                Logger.shared.log("Titler: No message received, or an error occurred")
-                completion("New chat")
-            }
         }
     }
     
@@ -73,10 +56,10 @@ struct ChatConversation: Codable, Identifiable {
         let fileURLs = try! fileManager.contentsOfDirectory(at: fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0],
                                                             includingPropertiesForKeys: nil)
         var conversations = [ChatConversation]()
-        for fileURL in fileURLs {
-            if fileURL.lastPathComponent.hasSuffix("chatConversation.json") {
+        for url in fileURLs {
+            if url.lastPathComponent.hasSuffix("chatConversation.json") {
                 do {
-                    let data = try Data(contentsOf: fileURL)
+                    let data = try Data(contentsOf: url)
                     conversations.append(try JSONDecoder().decode(ChatConversation.self, from: data))
                 } catch {
                     Logger.shared.log("Error loading conversation: \(error)")
@@ -86,24 +69,37 @@ struct ChatConversation: Codable, Identifiable {
         Logger.shared.log("loadAll: loaded conversations: \(conversations)")
         return conversations
     }
-    
-    func generateUniqueFilename() -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyyMMddHHmmss"
-        let timestamp = dateFormatter.string(from: Date())
-        
-        let uuid = UUID().uuidString
-        
-        return "conversation_\(timestamp)_\(uuid).\(conversationFileExtension)"
-    }
 }
 
+func generateUniqueFilename() -> String {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyyMMddHHmmss"
+    let timestamp = dateFormatter.string(from: Date())
+    
+    let uuid = UUID().uuidString
+    
+    return "conversation_\(timestamp)_\(uuid).\(conversationFileExtension)"
+}
 
 func setMetadata(conversation: ChatConversation, completion: @escaping (ChatConversation) -> Void) {
-    conversation.generateTitle() { newTitle in
+    generateTitle(messages: conversation.messages) { newTitle in
         var updatedConversation = conversation
         updatedConversation.title = newTitle
         completion(updatedConversation)
-        updatedConversation.timestamp = Date().timeIntervalSince1970
+    }
+}
+
+    
+func generateTitle(messages: [ChatMessage], completion: @escaping (String) -> Void) {
+    let TitlerChatAPI = TitlerChatAPI()
+    let openAIMessages = messages.map { $0.openAIMessage }
+    TitlerChatAPI.sendMessages(messages: openAIMessages) { result in
+        if let result = result {
+            Logger.shared.log("generateTitle: \(result.content)")
+            completion(result.content)
+        } else {
+            Logger.shared.log("Titler: No message received, or an error occurred")
+            completion("New chat")
+        }
     }
 }

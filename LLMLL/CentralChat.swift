@@ -263,6 +263,7 @@ struct ChatView: View {
     
     var body: some View {
         HStack {
+            
             ScrollView {
                 VStack(alignment: .leading) {
                     NewConversationButtonView(action: newConversation)
