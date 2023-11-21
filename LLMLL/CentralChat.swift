@@ -46,6 +46,18 @@ struct CircleIconButton: View {
     }
 }
 
+struct NewConversationButtonView: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding()
+    }
+}
+
 struct MessageBubble: View {
     let message: ChatMessage
     let action: () -> Void
@@ -92,6 +104,26 @@ struct CustomTextEditor: View {
                 )
         }
         .font(.system(size: fontSize))
+    }
+}
+
+struct ConversationsListView: View {
+    let conversations: [ChatConversation]
+    @Binding var activeConversation: ChatConversation
+    
+    var body: some View {
+        ForEach(self.conversations, id: \.id) { conversation in
+            Text(conversation.title)
+                .padding()
+                .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
+                .onTapGesture {
+                    self.activeConversation = conversation
+                }
+        }
+    }
+    
+    private func isActiveConversation(_ conversation: ChatConversation) -> Bool {
+        return conversation.id == activeConversation.id
     }
 }
 
@@ -222,17 +254,19 @@ struct ChatView: View {
         self.viewModel.inputText = ""
     }
     
+    private func newConversation() {
+        self.activeConversation = ChatConversation(messages: [])
+        self.conversations.insert(self.activeConversation, at: 0)
+        
+    }
+    
     var body: some View {
         HStack {
             ScrollView {
                 VStack(alignment: .leading) {
-                    ForEach(self.conversations, id: \.id) { conversation in
-                        Text(conversation.title)
-                            .padding()
-                            .onTapGesture {
-                                self.activeConversation = conversation
-                            }
-                    }
+                    NewConversationButtonView(action: newConversation)
+                    ConversationsListView(conversations: conversations,
+                                          activeConversation: $activeConversation)
                 }
             }
             .frame(width: 200)

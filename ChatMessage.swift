@@ -51,6 +51,7 @@ struct ChatConversation: Codable, Identifiable {
     let id: UUID
     var messages: [ChatMessage]
     var title: String
+    private var timestamp: Double?
     private let fileManager = FileManager.default
     
     init(messages: [ChatMessage]) {
@@ -65,13 +66,22 @@ struct ChatConversation: Codable, Identifiable {
     }
     
     private var fileURL: URL {
-        fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        self.fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("\(self.id).chatConversation.json")
     }
     
     mutating func append(_ message: ChatMessage) {
         self.messages.append(message)
     }
+    
+    func isNew() -> Bool {
+        return self.fileManager.fileExists(atPath: fileURL.path)
+    }
+    
+//    func setupMetadata() {
+//        // get timestamp
+//        self.timestamp = Date().timeIntervalSince1970
+//    }
     
     func save() {
         do {
