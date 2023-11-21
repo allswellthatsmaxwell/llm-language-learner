@@ -110,10 +110,11 @@ struct CustomTextEditor: View {
 struct ConversationsListView: View {
     let conversations: [ChatConversation]
     @Binding var activeConversation: ChatConversation
+    @ObservedObject var viewModel: ChatViewModel
     
     var body: some View {
         ForEach(self.conversations, id: \.id) { conversation in
-            Text(conversation.title)
+            Text(viewModel.titles[conversation.id, default: "Loading..."])
                 .padding()
                 .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
                 .onTapGesture {
@@ -129,19 +130,54 @@ struct ConversationsListView: View {
 
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
+    @Published var conversations: [ChatConversation] = ChatConversation.loadAll()
     var audioRecorder = AudioRecorder()
-    private var transcriptionAPI = TranscriptionAPI()
-    private var textToSpeechAPI = TextToSpeechAPI()
-    private var extractorChatAPI = ExtractorChatAPI()
+    private let transcriptionAPI = TranscriptionAPI()
+    private let textToSpeechAPI = TextToSpeechAPI()
+    private let extractorChatAPI = ExtractorChatAPI()
+    private var titlerChatAPI = TitlerChatAPI()
     private var audioPlayer: AVAudioPlayer?
-    
+    @Published var titles: [UUID: String] = [:]
     
     init() {
-        audioRecorder.onRecordingStopped { [weak self] audioURL in
+        self.audioRecorder.onRecordingStopped { [weak self] audioURL in
             if let url = audioURL {
                 self?.transcribeAudio(fileURL: url)
             } else {
                 Logger.shared.log("AudioURL is nil")
+            }
+        }
+        
+        self.fetchTitlesForConversations()
+    }
+    
+    
+    func fetchTitlesForConversations() {
+        self.conversations.forEach { conversation in
+            generateTitle(conversation: conversation) { newTitle in
+                DispatchQueue.main.async {
+                    self.titles[conversation.id] = newTitle
+                }
+            }
+        }
+    }
+    
+    func generateTitle(conversation: ChatConversation, completion: @escaping (String) -> Void) {
+        // use title if it exists
+        if let title = self.titles[conversation.id] {
+            completion(title)
+        } else {
+            // otherwise, generate it
+            self.titlerChatAPI.sendMessages(messages: conversation.messages.map( { $0.openAIMessage })) { createdTitle in
+                DispatchQueue.main.async {
+                    if let resultMessage = createdTitle {
+                        self.titles[conversation.id] = resultMessage.content
+                        completion(resultMessage.content)
+                    } else {
+                        Logger.shared.log("No title received, or an error occurred")
+                        completion("New chat")
+                    }
+                }
             }
         }
     }
@@ -221,7 +257,6 @@ class ChatViewModel: ObservableObject {
 
 struct ChatView: View {
     @State private var activeConversation = ChatConversation(messages: [])
-    @State private var conversations: [ChatConversation] = ChatConversation.loadAll()
     
     @StateObject private var viewModel = ChatViewModel()
     private var advisorChatAPI = AdvisorChatAPI()
@@ -241,11 +276,7 @@ struct ChatView: View {
                     Logger.shared.log("Received message: \(message.content)")
                     self.activeConversation.messages.append(
                         ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
-                    if self.activeConversation.isNew { 
-                        setMetadata(conversation: self.activeConversation) { updatedConversation in
-                            self.activeConversation = updatedConversation
-                        }
-                    }
+                    
                     self.activeConversation.save()
                 } else {
                     Logger.shared.log("No message received, or an error occurred")
@@ -257,18 +288,18 @@ struct ChatView: View {
     
     private func newConversation() {
         self.activeConversation = ChatConversation(messages: [])
-        self.conversations.insert(self.activeConversation, at: 0)
+        self.viewModel.conversations.insert(self.activeConversation, at: 0)
         
     }
     
     var body: some View {
         HStack {
-            
             ScrollView {
                 VStack(alignment: .leading) {
                     NewConversationButtonView(action: newConversation)
-                    ConversationsListView(conversations: conversations,
-                                          activeConversation: $activeConversation)
+                    ConversationsListView(conversations: self.viewModel.conversations,
+                                          activeConversation: $activeConversation,
+                                          viewModel: self.viewModel)
                 }
             }
             .frame(width: 200)

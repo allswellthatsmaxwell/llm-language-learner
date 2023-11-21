@@ -81,13 +81,6 @@ func generateUniqueFilename() -> String {
     return "conversation_\(timestamp)_\(uuid).\(conversationFileExtension)"
 }
 
-func setMetadata(conversation: ChatConversation, completion: @escaping (ChatConversation) -> Void) {
-    generateTitle(messages: conversation.messages) { newTitle in
-        var updatedConversation = conversation
-        updatedConversation.title = newTitle
-        completion(updatedConversation)
-    }
-}
 
     
 func generateTitle(messages: [ChatMessage], completion: @escaping (String) -> Void) {

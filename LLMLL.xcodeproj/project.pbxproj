@@ -97,7 +97,6 @@
 		5BFE3D4E2B06E43A00203EB3 = {
 			isa = PBXGroup;
 			children = (
-				5B46BD8E2B0CEC7E0037BBC3 /* ChatConversation.swift */,
 				5BFE3D892B06F00300203EB3 /* LLMLL.entitlements */,
 				5BFE3D592B06E43A00203EB3 /* LLMLL */,
 				5BFE3D6D2B06E43B00203EB3 /* LLMLLTests */,
@@ -119,6 +118,7 @@
 		5BFE3D592B06E43A00203EB3 /* LLMLL */ = {
 			isa = PBXGroup;
 			children = (
+				5B46BD8E2B0CEC7E0037BBC3 /* ChatConversation.swift */,
 				5B46BD8C2B0BD45F0037BBC3 /* ChatMessage.swift */,
 				5B422AEC2B0728DE00BC9FB4 /* Info.plist */,
 				5B46BD842B07323B0037BBC3 /* AudioPlayer.swift */,
