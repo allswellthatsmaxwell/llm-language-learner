@@ -66,6 +66,8 @@ struct ChatConversation: Codable, Identifiable {
                 }
             }
         }
+        // Sort by timestamp
+        conversations.sort { $0.timestamp > $1.timestamp }
         Logger.shared.log("loadAll: loaded conversations: \(conversations)")
         return conversations
     }

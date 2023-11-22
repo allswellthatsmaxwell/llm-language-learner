@@ -175,19 +175,12 @@ class ChatViewModel: ObservableObject {
         self.fetchTitlesForConversations()
     }
     
-    func addNewConversation(conversationToAdd: ChatConversation? = nil) {
-        if let conversation = conversationToAdd {
-            self.activeConversation = conversation
-        } else {
-            if self.activeConversation.messages.isEmpty && self.activeConversation.title == defaultChatTitle {
-                // The current active conversation is already a new conversation
-                return
-            }
-            
-            self.activeConversation = ChatConversation(messages: [])
-            self.activeConversation.title = defaultChatTitle
-        }
-        self.conversations.insert(self.activeConversation, at: 0)
+    func addNewConversation() {
+        var newConversation = ChatConversation(messages: [])
+        newConversation.title = defaultChatTitle
+        self.activeConversation = newConversation
+        self.conversations.insert(newConversation, at: 0)
+        // Note: We don't call generateSingleTitle here because it will be called after the first message is sent
     }
     
     
@@ -308,10 +301,11 @@ class ChatViewModel: ObservableObject {
                     let newChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
                     self.updateConversationWithNewMessage(newChatMessage)
                     if self.activeConversation.isNew {
-                        self.addNewConversation(conversationToAdd: self.activeConversation)
-                        Logger.shared.log("Generating title.")
+//                        self.addNewConversation(conversationToAdd: self.activeConversation)
+//                        Logger.shared.log("Generating title.")
                         self.generateSingleTitle(conversation: self.activeConversation)
                         Logger.shared.log("sendMessage: Title generated: \(self.activeConversation.title)")
+                        self.activeConversation.isNew = false
                     }
                     self.activeConversation.save()
                 } else {
