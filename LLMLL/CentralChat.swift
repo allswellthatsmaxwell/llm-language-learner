@@ -175,13 +175,20 @@ class ChatViewModel: ObservableObject {
         self.fetchTitlesForConversations()
     }
     
+    private func alreadyAddedBlankConversation() -> Bool {
+        let mostRecentConversation = self.conversations.first
+        return mostRecentConversation?.messages.count == 0
+    }
+    
     func addNewConversation() {
-        var newConversation = ChatConversation(messages: [])
-        newConversation.title = defaultChatTitle
-        self.activeConversation = newConversation
-        self.activeConversation.isNew = false
-        self.conversations.insert(newConversation, at: 0)
-        // Note: We don't call generateSingleTitle here because it will be called after the first message is sent
+        if !alreadyAddedBlankConversation() {
+            var newConversation = ChatConversation(messages: [])
+            newConversation.title = defaultChatTitle
+            self.activeConversation = newConversation
+            self.activeConversation.isNew = false
+            self.conversations.insert(newConversation, at: 0)
+            // Note: We don't call generateSingleTitle here because it will be called after the first message is sent
+        }
     }
     
     
