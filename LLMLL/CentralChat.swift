@@ -153,8 +153,9 @@ class ChatViewModel: ObservableObject {
     
     func addNewConversation() {
         self.activeConversation = ChatConversation(messages: [])
+        self.activeConversation.title = "New chat"
         self.conversations.insert(self.activeConversation, at: 0)
-        self.generateSingleTitle(conversation: self.activeConversation)
+        
     }
     
     func generateSingleTitle(conversation: ChatConversation) {
@@ -215,6 +216,7 @@ class ChatViewModel: ObservableObject {
                     case .success(let audioData):
                         do {
                             try audioData.write(to: audioFilePath)
+                            Logger.shared.log("Saved audio file to: \(audioFilePath)")
                             self?.playAudio(from: audioData)
                         } catch {
                             Logger.shared.log("Error saving audio file: \(error)")
@@ -273,6 +275,9 @@ class ChatViewModel: ObservableObject {
                     Logger.shared.log("Received message: \(message.content)")
                     self.activeConversation.messages.append(
                         ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                    if self.activeConversation.isNew {
+                        self.generateSingleTitle(conversation: self.activeConversation)
+                    }
                     self.activeConversation.save()
                 } else {
                     Logger.shared.log("No message received, or an error occurred")
