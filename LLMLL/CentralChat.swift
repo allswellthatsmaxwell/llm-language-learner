@@ -108,30 +108,30 @@ struct CustomTextEditor: View {
 }
 
 struct ConversationsListView: View {
-    let conversations: [ChatConversation]
-    @Binding var activeConversation: ChatConversation
     @ObservedObject var viewModel: ChatViewModel
     
     var body: some View {
-        ForEach(self.conversations, id: \.id) { conversation in
-            Text(viewModel.titles[conversation.id, default: "Loading..."])
+        ForEach(self.viewModel.conversations, id: \.id) { conversation in
+            Text(self.viewModel.titles[conversation.id, default: "Loading..."])
                 .padding()
                 .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
                 .onTapGesture {
-                    self.activeConversation = conversation
+                    self.viewModel.activeConversation = conversation
                 }
         }
     }
     
     private func isActiveConversation(_ conversation: ChatConversation) -> Bool {
-        return conversation.id == activeConversation.id
+        return conversation.id == self.viewModel.activeConversation.id
     }
 }
 
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     @Published var conversations: [ChatConversation] = ChatConversation.loadAll()
+    @Published var activeConversation = ChatConversation(messages: [])
     var audioRecorder = AudioRecorder()
+    private var advisorChatAPI = AdvisorChatAPI()
     private let transcriptionAPI = TranscriptionAPI()
     private let textToSpeechAPI = TextToSpeechAPI()
     private let extractorChatAPI = ExtractorChatAPI()
@@ -151,15 +151,22 @@ class ChatViewModel: ObservableObject {
         self.fetchTitlesForConversations()
     }
     
+    func addNewConversation() {
+        self.activeConversation = ChatConversation(messages: [])
+        self.conversations.insert(self.activeConversation, at: 0)
+        self.generateSingleTitle(conversation: self.activeConversation)
+    }
     
-    func fetchTitlesForConversations() {
-        self.conversations.forEach { conversation in
-            generateTitle(conversation: conversation) { newTitle in
-                DispatchQueue.main.async {
-                    self.titles[conversation.id] = newTitle
-                }
+    func generateSingleTitle(conversation: ChatConversation) {
+        generateTitle(conversation: conversation) { newTitle in
+            DispatchQueue.main.async {
+                self.titles[conversation.id] = newTitle
             }
         }
+    }
+    
+    func fetchTitlesForConversations() {
+        self.conversations.forEach { conversation in generateSingleTitle(conversation: conversation) }
     }
     
     func generateTitle(conversation: ChatConversation, completion: @escaping (String) -> Void) {
@@ -252,22 +259,12 @@ class ChatViewModel: ObservableObject {
             }
         }
     }
-}
-
-
-struct ChatView: View {
-    @State private var activeConversation = ChatConversation(messages: [])
     
-    @StateObject private var viewModel = ChatViewModel()
-    private var advisorChatAPI = AdvisorChatAPI()
-    private let entryButtonSize = CGFloat(55)
-    private let fontSize = CGFloat(18)
-    
-    private func sendMessage() {
+    func sendMessage() {
         Logger.shared.log("History so far: \(self.activeConversation.messages.map { $0.content })")
-        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: viewModel.inputText))
+        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
         self.activeConversation.append(userMessage)
-        DispatchQueue.main.async { self.viewModel.inputText = "" }
+        DispatchQueue.main.async { self.inputText = "" }
         
         let openAIMessages = self.activeConversation.messages.map { $0.openAIMessage }
         self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
@@ -276,36 +273,35 @@ struct ChatView: View {
                     Logger.shared.log("Received message: \(message.content)")
                     self.activeConversation.messages.append(
                         ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
-                    
                     self.activeConversation.save()
                 } else {
                     Logger.shared.log("No message received, or an error occurred")
                 }
             }
         }
-        self.viewModel.inputText = ""
+        self.inputText = ""
     }
+}
+
+
+struct ChatView: View {
     
-    private func newConversation() {
-        self.activeConversation = ChatConversation(messages: [])
-        self.viewModel.conversations.insert(self.activeConversation, at: 0)
-        
-    }
+    @StateObject private var viewModel = ChatViewModel()
+    private let entryButtonSize = CGFloat(55)
+    private let fontSize = CGFloat(18)
     
     var body: some View {
         HStack {
             ScrollView {
                 VStack(alignment: .leading) {
-                    NewConversationButtonView(action: newConversation)
-                    ConversationsListView(conversations: self.viewModel.conversations,
-                                          activeConversation: $activeConversation,
-                                          viewModel: self.viewModel)
+                    NewConversationButtonView(action: self.viewModel.addNewConversation)
+                    ConversationsListView(viewModel: self.viewModel)
                 }
             }
             .frame(width: 200)
             
             VStack {
-                List(self.activeConversation.messages) { message in
+                List(self.viewModel.activeConversation.messages) { message in
                     MessageBubble(
                         message: message,
                         action: { viewModel.hearButtonTapped(for: message) },
@@ -319,7 +315,7 @@ struct ChatView: View {
                                      action: viewModel.toggleRecording,
                                      size: entryButtonSize)
                     
-                    CircleIconButton(iconName: "paperplane.circle.fill", action: sendMessage, size: entryButtonSize)
+                    CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessage, size: entryButtonSize)
                 }
             }
         }
