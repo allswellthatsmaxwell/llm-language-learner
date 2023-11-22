@@ -154,8 +154,7 @@ class ChatViewModel: ObservableObject {
     func addNewConversation() {
         self.activeConversation = ChatConversation(messages: [])
         self.activeConversation.title = "New chat"
-        self.conversations.insert(self.activeConversation, at: 0)
-        
+        self.conversations.insert(self.activeConversation, at: 0)        
     }
     
     func generateSingleTitle(conversation: ChatConversation) {
@@ -265,7 +264,7 @@ class ChatViewModel: ObservableObject {
     func sendMessage() {
         Logger.shared.log("History so far: \(self.activeConversation.messages.map { $0.content })")
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
-        self.activeConversation.append(userMessage)
+        self.updateConversationWithNewMessage(userMessage)
         DispatchQueue.main.async { self.inputText = "" }
         
         let openAIMessages = self.activeConversation.messages.map { $0.openAIMessage }
@@ -273,8 +272,8 @@ class ChatViewModel: ObservableObject {
             DispatchQueue.main.async {
                 if let message = firstMessage {
                     Logger.shared.log("Received message: \(message.content)")
-                    self.activeConversation.messages.append(
-                        ChatMessage(msg: OpenAIMessage(AIContent: message.content)))
+                    let newChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
+                    self.updateConversationWithNewMessage(newChatMessage)
                     if self.activeConversation.isNew {
                         self.generateSingleTitle(conversation: self.activeConversation)
                     }
@@ -285,6 +284,15 @@ class ChatViewModel: ObservableObject {
             }
         }
         self.inputText = ""
+    }
+    
+    private func updateConversationWithNewMessage(_ message: ChatMessage) {
+        // TODO: O(Conversations) update every time a message is sent.... not great. Required for current code because ChatConversation is a struct.
+        if let index = conversations.firstIndex(where: { $0.id == activeConversation.id }) {
+            conversations[index].append(message)
+        }
+        activeConversation.append(message)
+        activeConversation.save()
     }
 }
 
