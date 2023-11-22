@@ -175,11 +175,21 @@ class ChatViewModel: ObservableObject {
         self.fetchTitlesForConversations()
     }
     
-    func addNewConversation() {
-        self.activeConversation = ChatConversation(messages: [])
-        self.activeConversation.title = defaultChatTitle
+    func addNewConversation(conversationToAdd: ChatConversation? = nil) {
+        if let conversation = conversationToAdd {
+            self.activeConversation = conversation
+        } else {
+            if self.activeConversation.messages.isEmpty && self.activeConversation.title == defaultChatTitle {
+                // The current active conversation is already a new conversation
+                return
+            }
+            
+            self.activeConversation = ChatConversation(messages: [])
+            self.activeConversation.title = defaultChatTitle
+        }
         self.conversations.insert(self.activeConversation, at: 0)
     }
+    
     
     func generateSingleTitle(conversation: ChatConversation) {
         generateTitle(conversation: conversation) { newTitle in
@@ -298,6 +308,7 @@ class ChatViewModel: ObservableObject {
                     let newChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
                     self.updateConversationWithNewMessage(newChatMessage)
                     if self.activeConversation.isNew {
+                        self.addNewConversation(conversationToAdd: self.activeConversation)
                         Logger.shared.log("Generating title.")
                         self.generateSingleTitle(conversation: self.activeConversation)
                         Logger.shared.log("sendMessage: Title generated: \(self.activeConversation.title)")
@@ -345,7 +356,7 @@ struct ChatView: View {
         HStack {
             ScrollView {
                 VStack(alignment: .leading) {
-                    NewConversationButtonView(action: self.viewModel.addNewConversation)
+                    NewConversationButtonView(action: { self.viewModel.addNewConversation() })
                     ConversationsListView(viewModel: self.viewModel)
                 }
             }
