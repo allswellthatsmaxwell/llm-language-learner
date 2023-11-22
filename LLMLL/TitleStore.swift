@@ -41,6 +41,4 @@ class TitleStore: ObservableObject {
         self.titles[chatId] = title
         save()
     }
-    
-    
 }

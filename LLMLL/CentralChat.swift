@@ -11,6 +11,8 @@ import SwiftData
 import AVFoundation
 
 
+private let defaultChatTitle = "New chat"
+
 struct TranscriptionResult: Codable {
     let text: String
 }
@@ -112,7 +114,7 @@ struct ConversationsListView: View {
     
     var body: some View {
         ForEach(self.viewModel.conversations, id: \.id) { conversation in
-            Text(self.viewModel.titleStore.titles[conversation.id, default: "Loading..."])
+            Text(self.viewModel.titleStore.titles[conversation.id, default: defaultChatTitle])
                 .padding()
                 .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
                 .onTapGesture {
@@ -153,8 +155,8 @@ class ChatViewModel: ObservableObject {
     
     func addNewConversation() {
         self.activeConversation = ChatConversation(messages: [])
-        self.activeConversation.title = "New chat"
-        self.conversations.insert(self.activeConversation, at: 0)        
+        self.activeConversation.title = defaultChatTitle
+        self.conversations.insert(self.activeConversation, at: 0)
     }
     
     func generateSingleTitle(conversation: ChatConversation) {
@@ -182,7 +184,7 @@ class ChatViewModel: ObservableObject {
                         completion(resultMessage.content)
                     } else {
                         Logger.shared.log("No title received, or an error occurred")
-                        completion("New chat")
+                        completion(defaultChatTitle)
                     }
                 }
             }
@@ -202,7 +204,6 @@ class ChatViewModel: ObservableObject {
             }
         } else {
             Logger.shared.log("Audio file does not exist, extracting foreign text")
-            // extract foreign text from the message
             self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
                 guard let message = firstMessage else {
                     Logger.shared.log("extractor/speaker: No message received, or an error occurred")
@@ -275,7 +276,9 @@ class ChatViewModel: ObservableObject {
                     let newChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
                     self.updateConversationWithNewMessage(newChatMessage)
                     if self.activeConversation.isNew {
+                        Logger.shared.log("Generating title.")
                         self.generateSingleTitle(conversation: self.activeConversation)
+                        Logger.shared.log("sendMessage: Title generated: \(self.activeConversation.title)")
                     }
                     self.activeConversation.save()
                 } else {
