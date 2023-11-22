@@ -28,6 +28,7 @@ struct CircleIconButton: View {
     let action: () -> Void
     let size: CGFloat
     @State private var isHovering = false
+    @Environment(\.colorScheme) var colorScheme
     
     init(iconName: String, action: @escaping () -> Void, size: CGFloat) {
         self.iconName = iconName
@@ -41,7 +42,7 @@ struct CircleIconButton: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
-                .foregroundColor(isHovering ? Color.white : Color.gray)
+                .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
                 //.clipShape(Circle())
         }
         .buttonStyle(PlainButtonStyle())
@@ -54,13 +55,14 @@ struct CircleIconButton: View {
 struct NewConversationButtonView: View {
     let action: () -> Void
     @State private var isHovering = false
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         Button(action: action) {
             Image(systemName: "plus.bubble")
                 .font(.system(size: 56))
                 .contentShape(Circle())
-                .foregroundColor(isHovering ? Color.white : Color.gray)
+                .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
         }
         .buttonStyle(PlainButtonStyle())
         .frame(maxWidth: .infinity, alignment: .center)
@@ -109,7 +111,7 @@ struct CustomTextEditor: View {
                     .padding(.top, 8)
             }
             TextEditor(text: $text)
-                .frame(minHeight: fontSize, maxHeight: 40)
+                .frame(minHeight: fontSize, maxHeight: 60)
                 .padding(4)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
@@ -324,7 +326,7 @@ class ChatViewModel: ObservableObject {
 struct ChatView: View {
     
     @StateObject private var viewModel = ChatViewModel()
-    private let entryButtonSize = CGFloat(55)
+    private let entryButtonSize = CGFloat(65)
     private let fontSize = CGFloat(18)
     
     var body: some View {
