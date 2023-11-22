@@ -50,13 +50,26 @@ struct CircleIconButton: View {
 
 struct NewConversationButtonView: View {
     let action: () -> Void
+    @State private var isHovering = false
     
     var body: some View {
         Button(action: action) {
-            Image(systemName: "plus")
+            Image(systemName: "plus.bubble")
+                .font(.system(size: 56))
+                .contentShape(Circle())
+                .foregroundColor(isHovering ? Color.white : Color.gray)
+                //.foregroundColor(.white)  // Set the color of the plus icon
+                // .padding()  // Add padding to make the box larger
+                //.background(Color.gray)  // Set the background color of the box
+                //.clipShape(Circle())  // Clip the background to a circle shape
         }
         .buttonStyle(PlainButtonStyle())
-        .padding()
+        // align right
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding() // space it from other content
+        .onHover { hovering in isHovering = hovering }
+        Divider()
+            .background(Color.gray.opacity(0.15))
     }
 }
 
@@ -113,13 +126,23 @@ struct ConversationsListView: View {
     @ObservedObject var viewModel: ChatViewModel
     
     var body: some View {
-        ForEach(self.viewModel.conversations, id: \.id) { conversation in
-            Text(self.viewModel.titleStore.titles[conversation.id, default: defaultChatTitle])
-                .padding()
-                .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
-                .onTapGesture {
-                    self.viewModel.activeConversation = conversation
+        VStack(spacing: 0) {
+            ForEach(self.viewModel.conversations, id: \.id) { conversation in
+                VStack(spacing: 0) {
+                    Text(self.viewModel.titleStore.titles[conversation.id, default: defaultChatTitle])
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding([.leading, .trailing], 16)
+                        .padding([.top, .bottom], 8)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            self.viewModel.activeConversation = conversation
+                        }
+                    Divider()
+                        .background(Color.gray.opacity(0.15))
                 }
+                .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
+
+            }
         }
     }
     
