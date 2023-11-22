@@ -301,8 +301,6 @@ class ChatViewModel: ObservableObject {
                     let newChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
                     self.updateConversationWithNewMessage(newChatMessage)
                     if self.activeConversation.isNew {
-//                        self.addNewConversation(conversationToAdd: self.activeConversation)
-//                        Logger.shared.log("Generating title.")
                         self.generateSingleTitle(conversation: self.activeConversation)
                         Logger.shared.log("sendMessage: Title generated: \(self.activeConversation.title)")
                         self.activeConversation.isNew = false
