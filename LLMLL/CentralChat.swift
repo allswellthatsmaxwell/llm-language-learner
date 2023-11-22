@@ -27,6 +27,7 @@ struct CircleIconButton: View {
     let iconName: String
     let action: () -> Void
     let size: CGFloat
+    @State private var isHovering = false
     
     init(iconName: String, action: @escaping () -> Void, size: CGFloat) {
         self.iconName = iconName
@@ -40,11 +41,13 @@ struct CircleIconButton: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
-                .foregroundColor(.white)
-                .clipShape(Circle())
+                .foregroundColor(isHovering ? Color.white : Color.gray)
+                //.clipShape(Circle())
         }
         .buttonStyle(PlainButtonStyle())
-        .padding()
+        .padding([.top, .bottom], 12)
+        .padding([.leading, .trailing], 8)
+        .onHover { hovering in isHovering = hovering }
     }
 }
 
@@ -58,15 +61,10 @@ struct NewConversationButtonView: View {
                 .font(.system(size: 56))
                 .contentShape(Circle())
                 .foregroundColor(isHovering ? Color.white : Color.gray)
-                //.foregroundColor(.white)  // Set the color of the plus icon
-                // .padding()  // Add padding to make the box larger
-                //.background(Color.gray)  // Set the background color of the box
-                //.clipShape(Circle())  // Clip the background to a circle shape
         }
         .buttonStyle(PlainButtonStyle())
-        // align right
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding() // space it from other content
+        .padding([.top], 14)
         .onHover { hovering in isHovering = hovering }
         Divider()
             .background(Color.gray.opacity(0.15))
