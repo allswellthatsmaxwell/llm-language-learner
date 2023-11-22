@@ -112,7 +112,7 @@ struct ConversationsListView: View {
     
     var body: some View {
         ForEach(self.viewModel.conversations, id: \.id) { conversation in
-            Text(self.viewModel.titles[conversation.id, default: "Loading..."])
+            Text(self.viewModel.titleStore.titles[conversation.id, default: "Loading..."])
                 .padding()
                 .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
                 .onTapGesture {
@@ -137,7 +137,7 @@ class ChatViewModel: ObservableObject {
     private let extractorChatAPI = ExtractorChatAPI()
     private var titlerChatAPI = TitlerChatAPI()
     private var audioPlayer: AVAudioPlayer?
-    @Published var titles: [UUID: String] = [:]
+    @Published var titleStore = TitleStore()
     
     init() {
         self.audioRecorder.onRecordingStopped { [weak self] audioURL in
@@ -160,7 +160,7 @@ class ChatViewModel: ObservableObject {
     func generateSingleTitle(conversation: ChatConversation) {
         generateTitle(conversation: conversation) { newTitle in
             DispatchQueue.main.async {
-                self.titles[conversation.id] = newTitle
+                self.titleStore.addTitle(chatId: conversation.id, title: newTitle)
             }
         }
     }
@@ -171,14 +171,14 @@ class ChatViewModel: ObservableObject {
     
     func generateTitle(conversation: ChatConversation, completion: @escaping (String) -> Void) {
         // use title if it exists
-        if let title = self.titles[conversation.id] {
+        if let title = self.titleStore.titles[conversation.id] {
             completion(title)
         } else {
             // otherwise, generate it
             self.titlerChatAPI.sendMessages(messages: conversation.messages.map( { $0.openAIMessage })) { createdTitle in
                 DispatchQueue.main.async {
                     if let resultMessage = createdTitle {
-                        self.titles[conversation.id] = resultMessage.content
+                        self.titleStore.addTitle(chatId: conversation.id, title: resultMessage.content)
                         completion(resultMessage.content)
                     } else {
                         Logger.shared.log("No title received, or an error occurred")
