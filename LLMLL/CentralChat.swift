@@ -179,6 +179,7 @@ class ChatViewModel: ObservableObject {
         var newConversation = ChatConversation(messages: [])
         newConversation.title = defaultChatTitle
         self.activeConversation = newConversation
+        self.activeConversation.isNew = false
         self.conversations.insert(newConversation, at: 0)
         // Note: We don't call generateSingleTitle here because it will be called after the first message is sent
     }
@@ -293,6 +294,14 @@ class ChatViewModel: ObservableObject {
         self.updateConversationWithNewMessage(userMessage)
         DispatchQueue.main.async { self.inputText = "" }
         
+        if self.activeConversation.isNew {
+            // If the new convo was made via button press, it's already in self.conversations.
+            // So only do this if we're in the case where the user opened the app and send a message
+            // without ever hitting "new chat".
+            self.conversations.insert(activeConversation, at: 0)
+            self.activeConversation.isNew = false
+        }
+        
         let openAIMessages = self.activeConversation.messages.map { $0.openAIMessage }
         self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
             DispatchQueue.main.async {
@@ -300,10 +309,9 @@ class ChatViewModel: ObservableObject {
                     Logger.shared.log("Received message: \(message.content)")
                     let newChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
                     self.updateConversationWithNewMessage(newChatMessage)
-                    if self.activeConversation.isNew {
+                    if self.activeConversation.title == defaultChatTitle {
                         self.generateSingleTitle(conversation: self.activeConversation)
                         Logger.shared.log("sendMessage: Title generated: \(self.activeConversation.title)")
-                        self.activeConversation.isNew = false
                     }
                     self.activeConversation.save()
                 } else {
