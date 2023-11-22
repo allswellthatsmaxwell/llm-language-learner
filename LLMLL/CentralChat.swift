@@ -43,7 +43,6 @@ struct CircleIconButton: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
                 .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
-                //.clipShape(Circle())
         }
         .buttonStyle(PlainButtonStyle())
         .padding([.top, .bottom], 12)
@@ -204,7 +203,7 @@ class ChatViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     if let resultMessage = createdTitle {
                         self.titleStore.addTitle(chatId: conversation.id, title: resultMessage.content)
-                        completion(resultMessage.content)
+                        completion(resultMessage.content.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))
                     } else {
                         Logger.shared.log("No title received, or an error occurred")
                         completion(defaultChatTitle)
@@ -322,9 +321,22 @@ class ChatViewModel: ObservableObject {
     }
 }
 
+struct DividerLine: View {
+    @Environment(\.colorScheme) var colorScheme
+    var width: CGFloat? = nil
+    var height: CGFloat? = nil
+
+    var body: some View {
+        let lineColor = colorScheme == .dark ? Color.white : Color.black
+
+        Rectangle()
+            .fill(lineColor)
+            .frame(width: width, height: height)
+            .padding(0)
+    }
+}
 
 struct ChatView: View {
-    
     @StateObject private var viewModel = ChatViewModel()
     private let entryButtonSize = CGFloat(65)
     private let fontSize = CGFloat(18)
@@ -339,6 +351,8 @@ struct ChatView: View {
             }
             .frame(width: 200)
             
+            DividerLine(width: 1)
+            
             VStack {
                 List(self.viewModel.activeConversation.messages) { message in
                     MessageBubble(
@@ -346,6 +360,8 @@ struct ChatView: View {
                         action: { viewModel.hearButtonTapped(for: message) },
                         fontSize: self.fontSize)
                 }
+                
+                DividerLine(height: 1)
                 
                 HStack {
                     CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize)
