@@ -11,8 +11,6 @@ import SwiftData
 import AVFoundation
 
 
-private let defaultChatTitle = "New chat"
-
 struct TranscriptionResult: Codable {
     let text: String
 }
@@ -23,145 +21,23 @@ struct ChatResult: Codable {
     let comments: String
 }
 
-struct CircleIconButton: View {
-    let iconName: String
-    let action: () -> Void
-    let size: CGFloat
-    @State private var isHovering = false
-    @Environment(\.colorScheme) var colorScheme
-    
-    init(iconName: String, action: @escaping () -> Void, size: CGFloat) {
-        self.iconName = iconName
-        self.action = action
-        self.size = size
-    }
-    
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: iconName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
-                .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .padding([.top, .bottom], 12)
-        .padding([.leading, .trailing], 8)
-        .onHover { hovering in isHovering = hovering }
-    }
-}
-
-struct NewConversationButtonView: View {
-    let action: () -> Void
-    @State private var isHovering = false
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "plus.bubble")
-                .font(.system(size: 56))
-                .contentShape(Circle())
-                .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding([.top], 14)
-        .onHover { hovering in isHovering = hovering }
-        Divider()
-            .background(Color.gray.opacity(0.15))
-    }
-}
-
-struct MessageBubble: View {
-    let message: ChatMessage
-    let action: () -> Void
-    let fontSize: CGFloat
-    private let listenButtonSize = CGFloat(30)
-    
-    var body: some View {
-        HStack {
-            if self.message.isUser { Spacer() } // Right-align user messages
-            
-            Text(self.message.content)
-                .padding()
-                .background(self.message.isUser ? Color.blue : Color.gray)
-                .cornerRadius(10)
-                .font(.system(size: self.fontSize))
-            
-            if !self.message.isUser { Spacer() } // Left-align AI messages
-            CircleIconButton(iconName: "speaker.circle",
-                             action: self.action,
-                             size: self.listenButtonSize)
-        }
-    }
-}
-
-struct CustomTextEditor: View {
-    @Binding var text: String
-    var placeholder: String
-    var fontSize: CGFloat
-    
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            if text.isEmpty {
-                Text(placeholder)
-                    .foregroundColor(.gray)
-                    .padding(.leading, 4)
-                    .padding(.top, 8)
-            }
-            TextEditor(text: $text)
-                .frame(minHeight: fontSize, maxHeight: 60)
-                .padding(4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray, lineWidth: 1)
-                )
-        }
-        .font(.system(size: fontSize))
-    }
-}
-
-struct ConversationsListView: View {
-    @ObservedObject var viewModel: ChatViewModel
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            ForEach(self.viewModel.conversationOrder, id: \.self) { conversationId in
-                VStack(spacing: 0) {
-                    Text(self.viewModel.titleStore.titles[conversationId, default: defaultChatTitle])
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding([.leading, .trailing], 16)
-                        .padding([.top, .bottom], 8)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            self.viewModel.activeConversationId = conversationId
-                        }
-                    Divider()
-                        .background(Color.gray.opacity(0.15))
-                }
-                .background(self.isActiveConversation(conversationId) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
-            }
-        }
-    }
-    
-    private func isActiveConversation(_ conversationId: UUID) -> Bool {
-        return conversationId == self.viewModel.activeConversationId
-    }
-}
 
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     @Published var conversations: [UUID:ChatConversation] = ChatConversation.loadAll()
     @Published var conversationOrder: [UUID] = []
+    
     @Published var activeConversationId: UUID
+    @Published var titleStore = TitleStore()
+    
     var audioRecorder = AudioRecorder()
+    private var audioPlayer: AVAudioPlayer?
+    
     private var advisorChatAPI = AdvisorChatAPI()
     private let transcriptionAPI = TranscriptionAPI()
     private let textToSpeechAPI = TextToSpeechAPI()
     private let extractorChatAPI = ExtractorChatAPI()
     private var titlerChatAPI = TitlerChatAPI()
-    private var audioPlayer: AVAudioPlayer?
-    @Published var titleStore = TitleStore()
     
     init() {
         let activeConversation = ChatConversation(messages: [])
@@ -200,14 +76,19 @@ class ChatViewModel: ObservableObject {
     }
     
     func addNewConversation() {
-        if !alreadyAddedBlankConversation() {
+        if let mostRecentConversationId = self.conversationOrder.first,
+           let mostRecentConversation = self.conversations[mostRecentConversationId],
+           mostRecentConversation.messages.isEmpty {
+            // if there's already an empty conversation ready for the user, just set their selected conversation to that
+            self.activeConversationId = mostRecentConversationId
+        } else {
+            // otherwise, make a new one for them
             var newConversation = ChatConversation(messages: [])
             newConversation.title = defaultChatTitle
             self.activeConversationId = newConversation.id
             newConversation.isNew = false // 11/22: there was a good reason we needed to do this... I just don't remember what it was
             self.conversations[newConversation.id] = newConversation
             self.conversationOrder.insert(newConversation.id, at: 0)
-            // We don't call generateSingleTitle here because it will be called after the first message is sent
         }
     }
     
@@ -323,6 +204,7 @@ class ChatViewModel: ObservableObject {
             self.conversations[targetConversationId] = targetConversation
             
             let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
+            Logger.shared.log("Sending messages: \(openAIMessages)")
             self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
                 DispatchQueue.main.async {
                     if let message = firstMessage {
@@ -347,20 +229,6 @@ class ChatViewModel: ObservableObject {
     }
 }
 
-struct DividerLine: View {
-    @Environment(\.colorScheme) var colorScheme
-    var width: CGFloat? = nil
-    var height: CGFloat? = nil
-    
-    var body: some View {
-        let lineColor = colorScheme == .dark ? Color.white : Color.black
-        
-        Rectangle()
-            .fill(lineColor)
-            .frame(width: width, height: height)
-            .padding(0)
-    }
-}
 
 struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()

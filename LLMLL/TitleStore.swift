@@ -7,6 +7,8 @@
 
 import Foundation
 
+let defaultChatTitle = "New chat"
+
 class TitleStore: ObservableObject {
     @Published var titles: [UUID:String]
     private var fileURL = getDocumentsDirectory().appendingPathComponent("titles.json")
