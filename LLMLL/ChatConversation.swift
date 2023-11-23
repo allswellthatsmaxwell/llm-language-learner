@@ -51,24 +51,25 @@ struct ChatConversation: Codable, Identifiable {
         }
     }
     
-    static func loadAll() -> [ChatConversation] {
+    static func loadAll() -> [UUID:ChatConversation] {
         let fileManager = FileManager.default
         let fileURLs = try! fileManager.contentsOfDirectory(at: fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0],
                                                             includingPropertiesForKeys: nil)
-        var conversations = [ChatConversation]()
+        var conversations = [UUID:ChatConversation]()
         for url in fileURLs {
             if url.lastPathComponent.hasSuffix("chatConversation.json") {
                 do {
                     let data = try Data(contentsOf: url)
-                    conversations.append(try JSONDecoder().decode(ChatConversation.self, from: data))
+                    let convo = try JSONDecoder().decode(ChatConversation.self, from: data)
+                    conversations[convo.id] = convo
                 } catch {
                     Logger.shared.log("Error loading conversation: \(error)")
                 }
             }
         }
         // Sort by timestamp
-        conversations.sort { $0.timestamp > $1.timestamp }
-        Logger.shared.log("loadAll: loaded conversations: \(conversations)")
+        // conversations.sort { $0.timestamp > $1.timestamp }
+        Logger.shared.log("Loaded \(conversations.count) conversations.")
         return conversations
     }
 }

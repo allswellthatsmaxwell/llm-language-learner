@@ -126,34 +126,34 @@ struct ConversationsListView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(self.viewModel.conversations, id: \.id) { conversation in
+            ForEach(Array(self.viewModel.conversations.keys), id: \.self) { conversationId in
                 VStack(spacing: 0) {
-                    Text(self.viewModel.titleStore.titles[conversation.id, default: defaultChatTitle])
+                    Text(self.viewModel.titleStore.titles[conversationId, default: defaultChatTitle])
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding([.leading, .trailing], 16)
                         .padding([.top, .bottom], 8)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            self.viewModel.activeConversation = conversation
+                            self.viewModel.activeConversationId = conversationId
                         }
                     Divider()
                         .background(Color.gray.opacity(0.15))
                 }
-                .background(self.isActiveConversation(conversation) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
+                .background(self.isActiveConversation(conversationId) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
 
             }
         }
     }
     
-    private func isActiveConversation(_ conversation: ChatConversation) -> Bool {
-        return conversation.id == self.viewModel.activeConversation.id
+    private func isActiveConversation(_ conversationId: UUID) -> Bool {
+        return conversationId == self.viewModel.activeConversationId
     }
 }
 
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
-    @Published var conversations: [ChatConversation] = ChatConversation.loadAll()
-    @Published var activeConversation = ChatConversation(messages: [])
+    @Published var conversations: [UUID:ChatConversation] = ChatConversation.loadAll()
+    @Published var activeConversationId: UUID
     var audioRecorder = AudioRecorder()
     private var advisorChatAPI = AdvisorChatAPI()
     private let transcriptionAPI = TranscriptionAPI()
@@ -172,6 +172,10 @@ class ChatViewModel: ObservableObject {
             }
         }
         
+        let activeConversation = ChatConversation(messages: [])
+        self.activeConversationId = activeConversation.id
+        self.conversations[activeConversationId] = activeConversation
+        
         self.fetchTitlesForConversations()
     }
     
@@ -184,10 +188,10 @@ class ChatViewModel: ObservableObject {
         if !alreadyAddedBlankConversation() {
             var newConversation = ChatConversation(messages: [])
             newConversation.title = defaultChatTitle
-            self.activeConversation = newConversation
-            self.activeConversation.isNew = false
-            self.conversations.insert(newConversation, at: 0)
-            // Note: We don't call generateSingleTitle here because it will be called after the first message is sent
+            self.activeConversationId = newConversation.id
+            newConversation.isNew = false // 11/22: there was a good reason we needed to do this... I just don't remember what it was
+            self.conversations[newConversation.id] = newConversation
+            // We don't call generateSingleTitle here because it will be called after the first message is sent
         }
     }
     
@@ -201,7 +205,7 @@ class ChatViewModel: ObservableObject {
     }
     
     func fetchTitlesForConversations() {
-        self.conversations.forEach { conversation in generateSingleTitle(conversation: conversation) }
+        self.conversations.values.forEach { conversation in generateSingleTitle(conversation: conversation) }
     }
     
     func generateTitle(conversation: ChatConversation, completion: @escaping (String) -> Void) {
@@ -296,46 +300,50 @@ class ChatViewModel: ObservableObject {
     }
     
     func sendMessage() {
-        Logger.shared.log("History so far: \(self.activeConversation.messages.map { $0.content })")
+        guard !self.inputText.isEmpty else { return }
+        // Logger.shared.log("History so far: \(self.conversations[activeConversationId].messages.map { $0.content })")
+        let currentConversationId = self.activeConversationId
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
-        self.updateConversationWithNewMessage(userMessage)
-        DispatchQueue.main.async { self.inputText = "" }
         
-        if self.activeConversation.isNew {
-            // If the new convo was made via button press, it's already in self.conversations.
-            // So only do this if we're in the case where the user opened the app and send a message
-            // without ever hitting "new chat".
-            self.conversations.insert(activeConversation, at: 0)
-            self.activeConversation.isNew = false
-        }
+        let targetConversationId = self.activeConversationId
+        let targetConversation = self.conversations[targetConversationId]
         
-        let openAIMessages = self.activeConversation.messages.map { $0.openAIMessage }
-        self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
-            DispatchQueue.main.async {
-                if let message = firstMessage {
-                    Logger.shared.log("Received message: \(message.content)")
-                    let newChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
-                    self.updateConversationWithNewMessage(newChatMessage)
-                    if self.activeConversation.title == defaultChatTitle {
-                        self.generateSingleTitle(conversation: self.activeConversation)
-                        Logger.shared.log("sendMessage: Title generated: \(self.activeConversation.title)")
+        
+        if var targetConversation = self.conversations[targetConversationId] {
+            DispatchQueue.main.async { self.inputText = "" }
+            targetConversation.append(userMessage)
+            targetConversation.save()
+            
+            if targetConversation.isNew {
+                // If the new convo was made via button press, it's already in self.conversations.
+                // So only do this if we're in the case where the user opened the app and send a message
+                // without ever hitting "new chat".
+                targetConversation.isNew = false
+                self.conversations[targetConversationId] = targetConversation
+            }
+            
+            let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
+            self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
+                DispatchQueue.main.async {
+                    if let message = firstMessage {
+                        Logger.shared.log("Received message: \(message.content)")
+                        let AIChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
+                        targetConversation.append(AIChatMessage)
+                        targetConversation.save()
+                        
+                        if targetConversation.title == defaultChatTitle {
+                            self.generateSingleTitle(conversation: targetConversation)
+                        }
+                        targetConversation.save()
+                    } else {
+                        Logger.shared.log("No message received, or an error occurred")
                     }
-                    self.activeConversation.save()
-                } else {
-                    Logger.shared.log("No message received, or an error occurred")
                 }
             }
+            self.inputText = ""
+        } else {
+            Logger.shared.log("Error in sendMessage: targetConversation is nil")
         }
-        self.inputText = ""
-    }
-    
-    private func updateConversationWithNewMessage(_ message: ChatMessage) {
-        // TODO: O(Conversations) update every time a message is sent.... not great. Required for current code because ChatConversation is a struct.
-        if let index = conversations.firstIndex(where: { $0.id == activeConversation.id }) {
-            conversations[index].append(message)
-        }
-        activeConversation.append(message)
-        activeConversation.save()
     }
 }
 
