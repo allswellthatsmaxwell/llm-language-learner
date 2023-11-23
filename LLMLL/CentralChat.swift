@@ -140,7 +140,7 @@ struct ConversationsListView: View {
                         .background(Color.gray.opacity(0.15))
                 }
                 .background(self.isActiveConversation(conversationId) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
-
+                
             }
         }
     }
@@ -153,6 +153,7 @@ struct ConversationsListView: View {
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     @Published var conversations: [UUID:ChatConversation] = ChatConversation.loadAll()
+    @Published var conversationOrder: [UUID] = []
     @Published var activeConversationId: UUID
     var audioRecorder = AudioRecorder()
     private var advisorChatAPI = AdvisorChatAPI()
@@ -164,6 +165,15 @@ class ChatViewModel: ObservableObject {
     @Published var titleStore = TitleStore()
     
     init() {
+        let activeConversation = ChatConversation(messages: [])
+        self.activeConversationId = activeConversation.id
+        self.conversations[activeConversationId] = activeConversation
+        
+        let sortedConversations = self.conversations.sorted(by: { $0.value.timestamp > $1.value.timestamp })
+        self.conversationOrder = sortedConversations.map { $0.key }
+        
+        self.fetchTitlesForConversations()
+        
         self.audioRecorder.onRecordingStopped { [weak self] audioURL in
             if let url = audioURL {
                 self?.transcribeAudio(fileURL: url)
@@ -171,17 +181,14 @@ class ChatViewModel: ObservableObject {
                 Logger.shared.log("AudioURL is nil")
             }
         }
-        
-        let activeConversation = ChatConversation(messages: [])
-        self.activeConversationId = activeConversation.id
-        self.conversations[activeConversationId] = activeConversation
-        
-        self.fetchTitlesForConversations()
     }
     
     private func alreadyAddedBlankConversation() -> Bool {
-        let mostRecentConversation = self.conversations.first
-        return mostRecentConversation?.messages.count == 0
+        guard let mostRecentConversationId = self.conversationOrder.first,
+              let mostRecentConversation = self.conversations[mostRecentConversationId] else {
+            return false
+        }
+        return mostRecentConversation.messages.isEmpty
     }
     
     func addNewConversation() {
@@ -191,6 +198,7 @@ class ChatViewModel: ObservableObject {
             self.activeConversationId = newConversation.id
             newConversation.isNew = false // 11/22: there was a good reason we needed to do this... I just don't remember what it was
             self.conversations[newConversation.id] = newConversation
+            self.conversationOrder.insert(newConversation.id, at: 0)
             // We don't call generateSingleTitle here because it will be called after the first message is sent
         }
     }
@@ -351,10 +359,10 @@ struct DividerLine: View {
     @Environment(\.colorScheme) var colorScheme
     var width: CGFloat? = nil
     var height: CGFloat? = nil
-
+    
     var body: some View {
         let lineColor = colorScheme == .dark ? Color.white : Color.black
-
+        
         Rectangle()
             .fill(lineColor)
             .frame(width: width, height: height)
@@ -380,11 +388,15 @@ struct ChatView: View {
             DividerLine(width: 1)
             
             VStack {
-                List(self.viewModel.activeConversation.messages) { message in
-                    MessageBubble(
-                        message: message,
-                        action: { viewModel.hearButtonTapped(for: message) },
-                        fontSize: self.fontSize)
+                if let activeConversation = self.viewModel.conversations[self.viewModel.activeConversationId] {
+                    List(activeConversation.messages) { message in
+                        MessageBubble(
+                            message: message,
+                            action: { viewModel.hearButtonTapped(for: message) },
+                            fontSize: self.fontSize)
+                    }
+                } else {
+                    Text("Error: No active conversation")
                 }
                 
                 DividerLine(height: 1)

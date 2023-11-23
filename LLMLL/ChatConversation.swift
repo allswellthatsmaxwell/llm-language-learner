@@ -14,7 +14,7 @@ struct ChatConversation: Codable, Identifiable {
     let id: UUID
     var messages: [ChatMessage]
     var title: String
-    private let timestamp: Double
+    let timestamp: Double
     var isNew: Bool
     private let fileURL: URL
     
