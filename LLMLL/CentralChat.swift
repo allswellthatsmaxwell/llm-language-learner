@@ -126,7 +126,7 @@ struct ConversationsListView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(Array(self.viewModel.conversations.keys), id: \.self) { conversationId in
+            ForEach(self.viewModel.conversationOrder, id: \.self) { conversationId in
                 VStack(spacing: 0) {
                     Text(self.viewModel.titleStore.titles[conversationId, default: defaultChatTitle])
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -140,7 +140,6 @@ struct ConversationsListView: View {
                         .background(Color.gray.opacity(0.15))
                 }
                 .background(self.isActiveConversation(conversationId) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
-                
             }
         }
     }
@@ -172,13 +171,22 @@ class ChatViewModel: ObservableObject {
         let sortedConversations = self.conversations.sorted(by: { $0.value.timestamp > $1.value.timestamp })
         self.conversationOrder = sortedConversations.map { $0.key }
         
-        self.fetchTitlesForConversations()
-        
         self.audioRecorder.onRecordingStopped { [weak self] audioURL in
             if let url = audioURL {
                 self?.transcribeAudio(fileURL: url)
             } else {
                 Logger.shared.log("AudioURL is nil")
+            }
+        }
+        generateAnyMissingConversationTitles()
+    }
+    
+    func generateAnyMissingConversationTitles() {
+        self.conversationOrder.forEach { conversationId in
+            if let conversation = self.conversations[conversationId] {
+                if conversation.messages.count >= 2 {
+                    generateSingleTitle(conversation: conversation)
+                }
             }
         }
     }
@@ -210,10 +218,6 @@ class ChatViewModel: ObservableObject {
                 self.titleStore.addTitle(chatId: conversation.id, title: newTitle)
             }
         }
-    }
-    
-    func fetchTitlesForConversations() {
-        self.conversations.values.forEach { conversation in generateSingleTitle(conversation: conversation) }
     }
     
     func generateTitle(conversation: ChatConversation, completion: @escaping (String) -> Void) {
@@ -309,26 +313,14 @@ class ChatViewModel: ObservableObject {
     
     func sendMessage() {
         guard !self.inputText.isEmpty else { return }
-        // Logger.shared.log("History so far: \(self.conversations[activeConversationId].messages.map { $0.content })")
-        let currentConversationId = self.activeConversationId
+        
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
-        
         let targetConversationId = self.activeConversationId
-        let targetConversation = self.conversations[targetConversationId]
-        
         
         if var targetConversation = self.conversations[targetConversationId] {
             DispatchQueue.main.async { self.inputText = "" }
             targetConversation.append(userMessage)
-            targetConversation.save()
-            
-            if targetConversation.isNew {
-                // If the new convo was made via button press, it's already in self.conversations.
-                // So only do this if we're in the case where the user opened the app and send a message
-                // without ever hitting "new chat".
-                targetConversation.isNew = false
-                self.conversations[targetConversationId] = targetConversation
-            }
+            self.conversations[targetConversationId] = targetConversation
             
             let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
             self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
@@ -337,18 +329,18 @@ class ChatViewModel: ObservableObject {
                         Logger.shared.log("Received message: \(message.content)")
                         let AIChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
                         targetConversation.append(AIChatMessage)
+                        self.conversations[targetConversationId] = targetConversation
                         targetConversation.save()
                         
-                        if targetConversation.title == defaultChatTitle {
+                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
                             self.generateSingleTitle(conversation: targetConversation)
                         }
-                        targetConversation.save()
+                        self.conversations[targetConversationId] = targetConversation
                     } else {
                         Logger.shared.log("No message received, or an error occurred")
                     }
                 }
             }
-            self.inputText = ""
         } else {
             Logger.shared.log("Error in sendMessage: targetConversation is nil")
         }
