@@ -86,6 +86,7 @@ struct CustomTextEditor: View {
     @Binding var text: String
     var placeholder: String
     var fontSize: CGFloat
+    var onReturn: () -> Void
     
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -102,6 +103,9 @@ struct CustomTextEditor: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.gray, lineWidth: 1)
                 )
+                .onSubmit {
+                    onReturn()
+                }
         }
         .font(.system(size: fontSize))
     }

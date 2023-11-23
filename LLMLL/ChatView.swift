@@ -262,13 +262,17 @@ struct ChatView: View {
                 DividerLine(height: 1)
                 
                 HStack {
-                    CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize)
+                    CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize) {
+                        viewModel.sendMessage()
+                    }
                     
                     CircleIconButton(iconName: viewModel.audioRecorder.isRecording ? "mic.circle.fill" : "mic.circle",
                                      action: viewModel.toggleRecording,
                                      size: entryButtonSize)
+                    .keyboardShortcut("a", modifiers: .command)
                     
                     CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessage, size: entryButtonSize)
+                        .keyboardShortcut(.return, modifiers: .command)
                 }
             }
         }
