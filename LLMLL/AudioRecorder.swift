@@ -38,9 +38,9 @@ class AudioRecorder: NSObject, ObservableObject, AVCaptureFileOutputRecordingDel
     }
 
     public func toggleIsRecording() {
-        DispatchQueue.main.async {
-            self.isRecording.toggle()
-        }
+        
+        self.isRecording.toggle()
+        
         if self.isRecording {
             self.startRecording()
         } else {

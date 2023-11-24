@@ -262,15 +262,15 @@ struct ChatView: View {
                         viewModel.sendMessage()
                     }
                     
-                    CircleIconButton(
-                        getIconName: { viewModel.audioRecorder.isRecording ? "stop.circle.fill" : "mic.circle"} ,
+                    AudioCircleIconButton(
+                        audioRecorder: self.viewModel.audioRecorder,
                         action: {
                             viewModel.audioRecorder.toggleIsRecording()
                         },
                         size: entryButtonSize)
-                    .keyboardShortcut("a", modifiers: .command)
+                    .keyboardShortcut("m", modifiers: .command)
                     
-                    CircleIconButton(getIconName: { "paperplane.circle.fill" }, action: self.viewModel.sendMessage, size: entryButtonSize)
+                    CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessage, size: entryButtonSize)
                         .keyboardShortcut(.return, modifiers: .command)
                 }
             }

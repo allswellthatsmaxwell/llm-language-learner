@@ -10,7 +10,7 @@ import SwiftUI
 
 
 struct CircleIconButton: View {
-    let getIconName: () -> String
+    let iconName: String
     let action: () -> Void
     let size: CGFloat
     @State private var isHovering = false
@@ -18,7 +18,7 @@ struct CircleIconButton: View {
     
     var body: some View {
         Button(action: action) {
-            Image(systemName: getIconName())
+            Image(systemName: iconName)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
@@ -28,6 +28,20 @@ struct CircleIconButton: View {
         .padding([.top, .bottom], 12)
         .padding([.leading, .trailing], 8)
         .onHover { hovering in isHovering = hovering }
+    }
+}
+
+struct AudioCircleIconButton: View {
+    @ObservedObject var audioRecorder: AudioRecorder
+    let action: () -> Void
+    let size: CGFloat
+
+    var body: some View {
+        CircleIconButton(
+            iconName: audioRecorder.isRecording ? "stop.circle.fill" : "mic.circle",
+            action: action,
+            size: size
+        )
     }
 }
 
@@ -69,7 +83,7 @@ struct MessageBubble: View {
                 .font(.system(size: self.fontSize))
             
             if !self.message.isUser { Spacer() } // Left-align AI messages
-            CircleIconButton(getIconName: { "speaker.circle" },
+            CircleIconButton(iconName: "speaker.circle",
                              action: self.action,
                              size: self.listenButtonSize)
         }
