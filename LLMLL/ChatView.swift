@@ -39,6 +39,8 @@ class ChatViewModel: ObservableObject {
     private let extractorChatAPI = ExtractorChatAPI()
     private var titlerChatAPI = TitlerChatAPI()
     
+    @Published var isLoading: Bool = false
+    
     init() {
         let activeConversation = ChatConversation(messages: [])
         self.activeConversationId = activeConversation.id
@@ -121,43 +123,51 @@ class ChatViewModel: ObservableObject {
         }
     }
     
+    private func playAudioFromExistingFile(_ audioFilePath: URL) {
+        do {
+            let audioData = try Data(contentsOf: audioFilePath)
+            playAudio(from: audioData)
+        } catch {
+            Logger.shared.log("Error reading audio file: \(error)")
+        }
+    }
+    
+    private func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, turnOffLoadingState: @escaping () -> Void) {
+        self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
+            guard let message = firstMessage else {
+                turnOffLoadingState()
+                Logger.shared.log("extractor/speaker: No message received, or an error occurred")
+                return
+            }
+            Logger.shared.log("Received message: \(message.content)")
+            self.textToSpeechAPI.synthesizeSpeech(from: message.content) { [weak self] result in
+                switch result {
+                case .success(let audioData):
+                    do {
+                        try audioData.write(to: audioFilePath)
+                        Logger.shared.log("Saved audio file to: \(audioFilePath)")
+                        self?.playAudio(from: audioData)
+                    } catch {
+                        Logger.shared.log("Error saving audio file: \(error)")
+                    }
+                case .failure(let error):
+                    Logger.shared.log("Failed to synthesize speech: \(error)")
+                }
+            }
+            turnOffLoadingState()
+        }
+    }
+    
     func hearButtonTapped(for message: ChatMessage, completion: @escaping () -> Void) {
         let fileManager = FileManager.default
         let audioFilePath = getDocumentsDirectory().appendingPathComponent(message.audioFilename)
         
         if fileManager.fileExists(atPath: audioFilePath.path) {
-            do {
-                let audioData = try Data(contentsOf: audioFilePath)
-                playAudio(from: audioData)
-                DispatchQueue.main.async { completion() }
-            } catch {
-                Logger.shared.log("Error reading audio file: \(error)")
-            }
+            self.playAudioFromExistingFile(audioFilePath)
         } else {
             Logger.shared.log("Audio file does not exist, extracting foreign text")
-            self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
-                guard let message = firstMessage else {
-                    Logger.shared.log("extractor/speaker: No message received, or an error occurred")
-                    return
-                }
-                Logger.shared.log("Received message: \(message.content)")
-                // Synthesize speech and then play it
-                self.textToSpeechAPI.synthesizeSpeech(from: message.content) { [weak self] result in
-                    DispatchQueue.main.async { completion() }
-                    switch result {
-                    case .success(let audioData):
-                        do {
-                            try audioData.write(to: audioFilePath)
-                            Logger.shared.log("Saved audio file to: \(audioFilePath)")
-                            self?.playAudio(from: audioData)
-                        } catch {
-                            Logger.shared.log("Error saving audio file: \(error)")
-                        }
-                    case .failure(let error):
-                        Logger.shared.log("Failed to synthesize speech: \(error)")
-                    }
-                }
-            }
+            completion()
+            processAndSynthesizeAudio(message, audioFilePath: audioFilePath, turnOffLoadingState: completion)
         }
     }
     

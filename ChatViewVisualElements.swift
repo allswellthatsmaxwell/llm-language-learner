@@ -84,20 +84,19 @@ struct MessageBubble: View {
                 .font(.system(size: self.fontSize))
             
             if !self.message.isUser { Spacer() } // Left-align AI messages
-            if isLoading {
+            if self.isLoading {
                 // Display a loading indicator or alternative icon
                 ProgressView()
-                    .frame(width: listenButtonSize, height: listenButtonSize)
+                    .frame(width: self.listenButtonSize, height: self.listenButtonSize)
             } else {
                 CircleIconButton(
                     iconName: "speaker.circle",
                     action: {
-                        isLoading = true  // Start loading
-                        action {  // Pass the completion handler
-                            isLoading = false  // Stop loading
+                        action {
+                            self.isLoading.toggle()  // Only set to true when needed
                         }
                     },
-                    size: listenButtonSize
+                    size: self.listenButtonSize
                 )
             }
         }
