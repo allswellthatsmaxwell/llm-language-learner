@@ -74,18 +74,32 @@ struct MessageBubble: View {
     @State private var isLoading = false
     @Environment(\.colorScheme) var colorScheme
     
+    private func getBackgroundColor() -> some View {
+        if self.message.isUser {
+            return Color.blue.brightness(0.0)
+        } else {
+            return colorScheme == .dark ? Color.gray.brightness(0.0) : Color.gray.brightness(0.4)
+        }
+    }
+    
+    private func getForegroundColor() -> Color {
+        if self.message.isUser {
+            return Color.white
+        } else {
+            return colorScheme == .dark ? Color.white : Color.black
+        }
+    }
+    
     var body: some View {
         HStack {
             if self.message.isUser { Spacer() } // Right-align user messages
             
             Text(self.message.content)
                 .padding()
-                .background(self.message.isUser ? Color.blue.brightness(0.0) :
-                                colorScheme == .dark ? Color.gray.brightness(0.0) : Color.gray.brightness(0.4))
+                .background(self.getBackgroundColor())
                 .cornerRadius(10)
                 .font(.system(size: self.fontSize))
-                .foregroundColor(self.message.isUser ? Color.white :
-                                    colorScheme == .dark ? Color.white : Color.black)
+                .foregroundColor(self.getForegroundColor())
                 .textSelection(.enabled)
             
             if !self.message.isUser { Spacer() } // Left-align AI messages
@@ -137,8 +151,11 @@ struct CustomTextEditor: View {
     }
 }
 
+
+
 struct ConversationsListView: View {
     @ObservedObject var viewModel: ChatViewModel
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
@@ -155,13 +172,22 @@ struct ConversationsListView: View {
                     Divider()
                         .background(Color.gray.opacity(0.15))
                 }
-                .background(self.isActiveConversation(conversationId) ? Color.gray.brightness(-0.3) : Color.clear.brightness(0))
+                .background(getConversationEntryColor(conversationId))
             }
         }
     }
     
     private func isActiveConversation(_ conversationId: UUID) -> Bool {
         return conversationId == self.viewModel.activeConversationId
+    }
+    
+    private func getConversationEntryColor(_ conversationId: UUID) -> some View {
+        let isActive = self.isActiveConversation(conversationId)
+        if self.colorScheme == .dark {
+            return isActive ? Color.gray.brightness(-0.3) : Color.clear.brightness(0.0)
+        } else {
+            return isActive ? Color.gray.brightness(0.2) : Color.clear.brightness(0.0)
+        }
     }
 }
 
