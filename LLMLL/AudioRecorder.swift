@@ -1,17 +1,17 @@
 import AVFoundation
 import Foundation
 
-class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
+class AudioRecorder: NSObject, ObservableObject, AVCaptureFileOutputRecordingDelegate {
     private var captureSession: AVCaptureSession?
     private var audioDeviceInput: AVCaptureDeviceInput?
     private var audioFileOutput: AVCaptureAudioFileOutput?
-    var isRecording = false
+    @Published var isRecording = false
     private var recordingStoppedCompletion: ((URL?) -> Void)?
     var savedAudioURL: URL?
 
     override init() {
         super.init()
-        setupCaptureSession()
+        self.setupCaptureSession()
     }
 
     private func setupCaptureSession() {
@@ -38,35 +38,36 @@ class AudioRecorder: NSObject, AVCaptureFileOutputRecordingDelegate {
     }
 
     public func toggleIsRecording() {
-        isRecording.toggle()
-        if isRecording {
-            startRecording()
+        DispatchQueue.main.async {
+            self.isRecording.toggle()
+        }
+        if self.isRecording {
+            self.startRecording()
         } else {
-            stopRecording()
+            self.stopRecording()
         }
     }
 
     private func startRecording() {
         guard let captureSession = captureSession, !captureSession.isRunning,
-              let audioFileOutput = audioFileOutput else { return }
+              let audioFileOutput = self.audioFileOutput else { return }
         captureSession.startRunning()
 
         let audioURL = getDocumentsDirectory().appendingPathComponent("Recording-\(Date().timeIntervalSince1970).m4a")
         let outputFileType = AVFileType.m4a
         audioFileOutput.startRecording(to: audioURL, outputFileType: outputFileType, recordingDelegate: self)
         self.savedAudioURL = audioURL
-        
     }
     
     func onRecordingStopped(completion: @escaping (URL?) -> Void) {
-        recordingStoppedCompletion = completion
+        self.recordingStoppedCompletion = completion
     }
 
     private func stopRecording() {
         guard let captureSession = captureSession, captureSession.isRunning else { return }
         captureSession.stopRunning()
-        audioFileOutput?.stopRecording()
-        recordingStoppedCompletion?(savedAudioURL)
+        self.audioFileOutput?.stopRecording()
+        self.recordingStoppedCompletion?(savedAudioURL)
     }
 
     // AVCaptureFileOutputRecordingDelegate methods

@@ -30,7 +30,7 @@ class ChatViewModel: ObservableObject {
     @Published var activeConversationId: UUID
     @Published var titleStore = TitleStore()
     
-    var audioRecorder = AudioRecorder()
+    @Published var audioRecorder = AudioRecorder()
     private var audioPlayer: AVAudioPlayer?
     
     private var advisorChatAPI = AdvisorChatAPI()
@@ -168,10 +168,6 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    func toggleRecording() {
-        audioRecorder.toggleIsRecording()
-    }
-    
     private func transcribeAudio(fileURL: URL) {
         transcriptionAPI.transcribe(fileURL: fileURL) { [weak self] result in
             switch result {
@@ -266,12 +262,15 @@ struct ChatView: View {
                         viewModel.sendMessage()
                     }
                     
-                    CircleIconButton(iconName: viewModel.audioRecorder.isRecording ? "mic.circle.fill" : "mic.circle",
-                                     action: viewModel.toggleRecording,
-                                     size: entryButtonSize)
+                    CircleIconButton(
+                        getIconName: { viewModel.audioRecorder.isRecording ? "stop.circle.fill" : "mic.circle"} ,
+                        action: {
+                            viewModel.audioRecorder.toggleIsRecording()
+                        },
+                        size: entryButtonSize)
                     .keyboardShortcut("a", modifiers: .command)
                     
-                    CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessage, size: entryButtonSize)
+                    CircleIconButton(getIconName: { "paperplane.circle.fill" }, action: self.viewModel.sendMessage, size: entryButtonSize)
                         .keyboardShortcut(.return, modifiers: .command)
                 }
             }

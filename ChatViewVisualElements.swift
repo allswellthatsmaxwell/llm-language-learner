@@ -10,21 +10,15 @@ import SwiftUI
 
 
 struct CircleIconButton: View {
-    let iconName: String
+    let getIconName: () -> String
     let action: () -> Void
     let size: CGFloat
     @State private var isHovering = false
-    @Environment(\.colorScheme) var colorScheme
-    
-    init(iconName: String, action: @escaping () -> Void, size: CGFloat) {
-        self.iconName = iconName
-        self.action = action
-        self.size = size
-    }
+    @Environment(\.colorScheme) var colorScheme    
     
     var body: some View {
         Button(action: action) {
-            Image(systemName: iconName)
+            Image(systemName: getIconName())
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
@@ -75,7 +69,7 @@ struct MessageBubble: View {
                 .font(.system(size: self.fontSize))
             
             if !self.message.isUser { Spacer() } // Left-align AI messages
-            CircleIconButton(iconName: "speaker.circle",
+            CircleIconButton(getIconName: { "speaker.circle" },
                              action: self.action,
                              size: self.listenButtonSize)
         }
