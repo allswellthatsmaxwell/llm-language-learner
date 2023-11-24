@@ -121,7 +121,7 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    func hearButtonTapped(for message: ChatMessage) {
+    func hearButtonTapped(for message: ChatMessage, completion: @escaping () -> Void) {
         let fileManager = FileManager.default
         let audioFilePath = getDocumentsDirectory().appendingPathComponent(message.audioFilename)
         
@@ -129,6 +129,7 @@ class ChatViewModel: ObservableObject {
             do {
                 let audioData = try Data(contentsOf: audioFilePath)
                 playAudio(from: audioData)
+                DispatchQueue.main.async { completion() }
             } catch {
                 Logger.shared.log("Error reading audio file: \(error)")
             }
@@ -142,6 +143,7 @@ class ChatViewModel: ObservableObject {
                 Logger.shared.log("Received message: \(message.content)")
                 // Synthesize speech and then play it
                 self.textToSpeechAPI.synthesizeSpeech(from: message.content) { [weak self] result in
+                    DispatchQueue.main.async { completion() }
                     switch result {
                     case .success(let audioData):
                         do {
@@ -248,7 +250,9 @@ struct ChatView: View {
                     List(activeConversation.messages) { message in
                         MessageBubble(
                             message: message,
-                            action: { viewModel.hearButtonTapped(for: message) },
+                            action: { completion in
+                                viewModel.hearButtonTapped(for: message, completion: completion)
+                            },
                             fontSize: self.fontSize)
                     }
                 } else {

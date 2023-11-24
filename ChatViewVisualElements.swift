@@ -68,9 +68,10 @@ struct NewConversationButtonView: View {
 
 struct MessageBubble: View {
     let message: ChatMessage
-    let action: () -> Void
+    let action: ( @escaping () -> Void ) -> Void
     let fontSize: CGFloat
     private let listenButtonSize = CGFloat(30)
+    @State private var isLoading = false
     
     var body: some View {
         HStack {
@@ -83,9 +84,22 @@ struct MessageBubble: View {
                 .font(.system(size: self.fontSize))
             
             if !self.message.isUser { Spacer() } // Left-align AI messages
-            CircleIconButton(iconName: "speaker.circle",
-                             action: self.action,
-                             size: self.listenButtonSize)
+            if isLoading {
+                // Display a loading indicator or alternative icon
+                ProgressView()
+                    .frame(width: listenButtonSize, height: listenButtonSize)
+            } else {
+                CircleIconButton(
+                    iconName: "speaker.circle",
+                    action: {
+                        isLoading = true  // Start loading
+                        action {  // Pass the completion handler
+                            isLoading = false  // Stop loading
+                        }
+                    },
+                    size: listenButtonSize
+                )
+            }
         }
     }
 }
