@@ -15,22 +15,45 @@ private var circleButtonLeadingTrailingPadding = CGFloat(8)
 struct CircleIconButton: View {
     let iconName: String
     let action: () -> Void
+    let longPressAction: () -> Void
     let size: CGFloat
+    @State private var pressTimer: Timer? = nil
     @State private var isHovering = false
-    @Environment(\.colorScheme) var colorScheme    
+    @Environment(\.colorScheme) var colorScheme
+    
+    init(iconName: String, action: @escaping () -> Void, longPressAction: @escaping () -> Void = {}, size: CGFloat = 30) {
+        self.iconName = iconName
+        self.action = action
+        self.longPressAction = longPressAction
+        self.size = size
+    }
     
     var body: some View {
-        Button(action: action) {
-            Image(systemName: iconName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
-                .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .padding([.top, .bottom], circleButtonTopBottomPadding)
-        .padding([.leading, .trailing], circleButtonLeadingTrailingPadding)
-        .onHover { hovering in isHovering = hovering }
+        Image(systemName: iconName)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
+            .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
+        
+            .buttonStyle(PlainButtonStyle())
+            .padding([.top, .bottom], circleButtonTopBottomPadding)
+            .padding([.leading, .trailing], circleButtonLeadingTrailingPadding)
+            .onHover { hovering in isHovering = hovering }
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        pressTimer?.invalidate()
+                        pressTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
+                            longPressAction()
+                            pressTimer = nil
+                        }
+                    }
+                    .onEnded { _ in
+                        pressTimer?.invalidate()
+                        pressTimer = nil
+                        action()
+                    }
+            )
     }
 }
 
@@ -73,6 +96,7 @@ struct MessageBubble: View {
     let message: ChatMessage
     let action: ( @escaping () -> Void ) -> Void
     let fontSize: CGFloat
+    var viewModel: ChatViewModel
     private let listenButtonSize = CGFloat(30)
     @State private var isLoading = false
     @Environment(\.colorScheme) var colorScheme
@@ -116,9 +140,12 @@ struct MessageBubble: View {
                 CircleIconButton(
                     iconName: "speaker.circle",
                     action: {
-                        action {
-                            self.isLoading.toggle()  // Only set to true when needed
-                        }
+                        self.viewModel.hearButtonTapped(for: self.message, completion: { self.isLoading.toggle() })
+                    },
+                    longPressAction: {
+                        self.viewModel.processAndSynthesizeAudio(self.message,
+                                                                 audioFilePath: self.viewModel.getAudioFile(self.message),
+                                                                 toggleLoadingState: { self.isLoading.toggle() })
                     },
                     size: self.listenButtonSize
                 )
@@ -126,6 +153,7 @@ struct MessageBubble: View {
         }
     }
 }
+                                     
 
 struct CustomTextEditor: View {
     @Binding var text: String

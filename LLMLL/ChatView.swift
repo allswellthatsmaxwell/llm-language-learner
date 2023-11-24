@@ -124,7 +124,8 @@ class ChatViewModel: ObservableObject {
     }
     
     
-    private func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
+    func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
+        toggleLoadingState() // turn on
         self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
             // TODO: When sendMessages fails to return, that failure doesn't make it back here, so we never execute any
             // of the code in this block. So the loading-spinny on the "speak this text" button spins forever.
@@ -141,27 +142,31 @@ class ChatViewModel: ObservableObject {
                     do {
                         try audioData.write(to: audioFilePath)
                         Logger.shared.log("Saved audio file to: \(audioFilePath)")
-                        try self?.playAudio(from: audioData)
+                        try self?.playAudio(from: audioData)                        
                     } catch {
                         Logger.shared.log("Error saving or playing audio file: \(error)")
                     }
+                    toggleLoadingState() // turn off
                 case .failure(let error):
                     Logger.shared.log("Failed to synthesize speech: \(error)")
+                    toggleLoadingState() // turn off
                 }
             }
-            toggleLoadingState() // turn off
         }
     }
     
+    func getAudioFile(_ message: ChatMessage) -> URL {
+        return getDocumentsDirectory().appendingPathComponent(message.audioFilename)
+    }
+    
     func hearButtonTapped(for message: ChatMessage, completion: @escaping () -> Void) {
-        let audioFilePath = getDocumentsDirectory().appendingPathComponent(message.audioFilename)
+        let audioFilePath = self.getAudioFile(message)
         
         do {
             let audioData = try Data(contentsOf: audioFilePath)
             try playAudio(from: audioData)
         } catch {
             Logger.shared.log("Couldn't read audio file: \(error). Extracting foreign text.")
-            completion()
             processAndSynthesizeAudio(message, audioFilePath: audioFilePath, toggleLoadingState: completion)
         }
     }
@@ -252,9 +257,10 @@ struct ChatView: View {
                         MessageBubble(
                             message: message,
                             action: { completion in
-                                viewModel.hearButtonTapped(for: message, completion: completion)
+                                self.viewModel.hearButtonTapped(for: message, completion: completion)
                             },
-                            fontSize: self.fontSize)
+                            fontSize: self.fontSize,
+                            viewModel: self.viewModel)
                     }
                 } else {
                     Text("Error: No active conversation")
