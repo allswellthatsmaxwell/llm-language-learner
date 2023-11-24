@@ -9,6 +9,9 @@ import Foundation
 import SwiftUI
 
 
+private var circleButtonTopBottomPadding = CGFloat(12)
+private var circleButtonLeadingTrailingPadding = CGFloat(8)
+
 struct CircleIconButton: View {
     let iconName: String
     let action: () -> Void
@@ -25,8 +28,8 @@ struct CircleIconButton: View {
                 .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
         }
         .buttonStyle(PlainButtonStyle())
-        .padding([.top, .bottom], 12)
-        .padding([.leading, .trailing], 8)
+        .padding([.top, .bottom], circleButtonTopBottomPadding)
+        .padding([.leading, .trailing], circleButtonLeadingTrailingPadding)
         .onHover { hovering in isHovering = hovering }
     }
 }
@@ -107,6 +110,8 @@ struct MessageBubble: View {
                 // Display a loading indicator or alternative icon
                 ProgressView()
                     .frame(width: self.listenButtonSize, height: self.listenButtonSize)
+                    .padding([.top, .bottom], circleButtonTopBottomPadding)
+                    .padding([.leading, .trailing], circleButtonLeadingTrailingPadding)
             } else {
                 CircleIconButton(
                     iconName: "speaker.circle",
