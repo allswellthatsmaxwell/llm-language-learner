@@ -72,6 +72,7 @@ struct MessageBubble: View {
     let fontSize: CGFloat
     private let listenButtonSize = CGFloat(30)
     @State private var isLoading = false
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack {
@@ -79,9 +80,13 @@ struct MessageBubble: View {
             
             Text(self.message.content)
                 .padding()
-                .background(self.message.isUser ? Color.blue : Color.gray)
+                .background(self.message.isUser ? Color.blue.brightness(0.0) :
+                                colorScheme == .dark ? Color.gray.brightness(0.0) : Color.gray.brightness(0.4))
                 .cornerRadius(10)
                 .font(.system(size: self.fontSize))
+                .foregroundColor(self.message.isUser ? Color.white :
+                                    colorScheme == .dark ? Color.white : Color.black)
+                .textSelection(.enabled)
             
             if !self.message.isUser { Spacer() } // Left-align AI messages
             if self.isLoading {
