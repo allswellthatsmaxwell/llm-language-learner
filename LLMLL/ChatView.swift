@@ -124,10 +124,13 @@ class ChatViewModel: ObservableObject {
     }
     
     
-    private func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, turnOffLoadingState: @escaping () -> Void) {
+    private func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
         self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
+            // TODO: When sendMessages fails to return, that failure doesn't make it back here, so we never execute any
+            // of the code in this block. So the loading-spinny on the "speak this text" button spins forever.
+            // We need to propogate that error up here, and toggle the loading state in that case too.
             guard let message = firstMessage else {
-                turnOffLoadingState()
+                toggleLoadingState() // turn off
                 Logger.shared.log("extractor/speaker: No message received, or an error occurred")
                 return
             }
@@ -146,7 +149,7 @@ class ChatViewModel: ObservableObject {
                     Logger.shared.log("Failed to synthesize speech: \(error)")
                 }
             }
-            turnOffLoadingState()
+            toggleLoadingState() // turn off
         }
     }
     
@@ -159,7 +162,7 @@ class ChatViewModel: ObservableObject {
         } catch {
             Logger.shared.log("Couldn't read audio file: \(error). Extracting foreign text.")
             completion()
-            processAndSynthesizeAudio(message, audioFilePath: audioFilePath, turnOffLoadingState: completion)
+            processAndSynthesizeAudio(message, audioFilePath: audioFilePath, toggleLoadingState: completion)
         }
     }
     
