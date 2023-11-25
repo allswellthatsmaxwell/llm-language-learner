@@ -7,7 +7,25 @@
 
 import Foundation
 
+enum ChatAPIError: Error {
+    case missingData
+    case decodingError
+    case networkError(String)
+    // Add other error cases as needed
+}
 
+extension ChatAPIError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .missingData:
+            return NSLocalizedString("Missing data in response.", comment: "Missing Data Error")
+        case .decodingError:
+            return NSLocalizedString("Error decoding response data.", comment: "Decoding Error")
+        case .networkError(let message):
+            return NSLocalizedString("Network error: \(message)", comment: "Network Error")
+        }
+    }
+}
 class OpenAIMessage: Codable {
     var role: String
     var content: String
@@ -43,6 +61,24 @@ struct OpenAIResponse: Codable {
     var choices: [Choice]
 }
 
+struct OpenAIStreamingResponse: Codable {
+    struct Choice: Codable {
+        struct Delta: Codable {
+            let content: String?
+            let role: String?
+        }
+        let delta: Delta?
+        let finish_reason: String?
+        let index: Int
+    }
+
+    let choices: [Choice]
+    let created: Int
+    let id: String
+    let model: String
+    let object: String
+}
+
 struct Choice: Codable {
     var message: OpenAIMessage
 }
@@ -69,13 +105,94 @@ class ChatAPI: OpenAIAPI {
             let requestBody: [String: Any] = [
                 // "model": "gpt-4-1106-preview",
                 "model": "gpt-3.5-turbo", // -1106
-                "messages": messageDicts
+                "messages": messageDicts,
+                "stream": true
             ]
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             submitRequest(request: request, completion: completion)
         } catch {
             completion(.failure(error))
         }
+    }
+    
+    func getChatCompletionResponseStreaming(messages: [OpenAIMessage], completion: @escaping (Result<OpenAIStreamingResponse, Error>) -> Void) {
+        Logger.shared.log("Entered getChatCompletionResponseStreaming")
+        guard var request = constructRequest(url: url) else { return }
+
+        let allMessages = [OpenAIMessage(systemContent: self.systemPrompt)] + messages
+        let messageDicts = allMessages.map { ["role": $0.role, "content": $0.content] }
+
+        let requestBody: [String: Any] = [
+            "model": "gpt-3.5-turbo",
+            "messages": messageDicts,
+            "stream": true
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        } catch {
+            // Handle error
+            return
+        }
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                // Handle error
+                return
+            }
+
+            guard let data = data else {
+                // Handle error: no data
+                return
+            }
+
+            self.processStreamedData(data)
+        }
+
+        task.resume()
+    }
+    
+    private func processStreamedData(_ data: Data) {
+        Logger.shared.log("processStreamedData")
+        // Assuming the data is UTF8 encoded
+        guard let string = String(data: data, encoding: .utf8) else {
+            Logger.shared.log("processStreamedData: failed to convert data to string")
+            return
+        }
+        
+        // Split the string by newlines to process each JSON object separately
+        let jsonStrings = string.components(separatedBy: "\n")
+        
+        for jsonString in jsonStrings {
+            Logger.shared.log("Attempting to decode JSON string: \(jsonString)")
+            let cleanedJsonString = jsonString.replacingOccurrences(of: "data: ", with: "")
+            guard !cleanedJsonString.isEmpty,
+                  let jsonData = cleanedJsonString.data(using: .utf8) else {
+                Logger.shared.log("processStreamedData: JSON data is empty, or failed to convert to data")
+                continue
+            }
+            
+            do {
+                // Replace OpenAIResponse with your appropriate response model
+                let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: jsonData)
+                Logger.shared.log("processStreamedData: Successfully decoded JSON")
+                DispatchQueue.main.async {
+                    self.processIncomingMessage(responseChunk)
+                }
+            } catch {
+                Logger.shared.log("processStreamedData: Failed to decode JSON")
+            }
+        }
+    }
+    
+    private func processIncomingMessage(_ responseChunk: OpenAIStreamingResponse) {
+        Logger.shared.log("processIncomingMessage")
+        guard let delta = responseChunk.choices.first?.delta else {
+            return
+        }
+
+        let message = ChatMessage(msg: OpenAIMessage(AIContent: delta.content ?? ""))
+        
     }
     
     func sendMessages(messages: [OpenAIMessage], completion: @escaping (OpenAIMessage?) -> Void) {
@@ -125,6 +242,8 @@ Therefore, you should do your best to interpret what they are trying to say.
     * Not using the polite form, with 요 in the right places, counts as a mistake you should correct.
   * Finally, give the translation.
 * Do not include the english pronunciation. A separate utility will pronounce the Korean you provide, using text-to-speech technology.
+
+Make sure to put the correct hangul first, on its own line.
 """
     }
 }
@@ -132,8 +251,8 @@ Therefore, you should do your best to interpret what they are trying to say.
 class ExtractorChatAPI: ChatAPI {
     override var systemPrompt: String {
         return """
-Extract the Korean Hangul text from the first part of the message the user gives you. Only extract the one Hangul word/phrase/sentence/paragraph/text.
-Don't extract any English. Return only the Hangul you extract, with no additional text.
+Extract the Korean Hangul text from the first part of the message the user gives you. Only extract the Hangul word/phrase/sentence/paragraph/text.
+Don't extract any English. Return only the Hangul you extract, with no additional text. No English whatsoever!
 """
     }
 }

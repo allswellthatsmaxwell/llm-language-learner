@@ -142,7 +142,7 @@ class ChatViewModel: ObservableObject {
                     do {
                         try audioData.write(to: audioFilePath)
                         Logger.shared.log("Saved audio file to: \(audioFilePath)")
-                        try self?.playAudio(from: audioData)                        
+                        try self?.playAudio(from: audioData)
                     } catch {
                         Logger.shared.log("Error saving or playing audio file: \(error)")
                     }
@@ -196,7 +196,43 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    func sendMessage() {
+//    func sendMessage() {
+//        guard !self.inputText.isEmpty else { return }
+//        
+//        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
+//        let targetConversationId = self.activeConversationId
+//        
+//        if var targetConversation = self.conversations[targetConversationId] {
+//            DispatchQueue.main.async { self.inputText = "" }
+//            targetConversation.append(userMessage)
+//            self.conversations[targetConversationId] = targetConversation
+//            
+//            let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
+//            Logger.shared.log("Sending messages: \(openAIMessages)")
+//            self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
+//                DispatchQueue.main.async {
+//                    if let message = firstMessage {
+//                        Logger.shared.log("Received message: \(message.content)")
+//                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
+//                        targetConversation.append(aiChatMessage)
+//                        self.conversations[targetConversationId] = targetConversation
+//                        targetConversation.save()
+//                        
+//                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
+//                            self.generateSingleTitle(conversation: targetConversation)
+//                        }
+//                        self.conversations[targetConversationId] = targetConversation
+//                    } else {
+//                        Logger.shared.log("No message received, or an error occurred")
+//                    }
+//                }
+//            }
+//        } else {
+//            Logger.shared.log("Error in sendMessage: targetConversation is nil")
+//        }
+//    }
+//    
+    func sendMessageWithStreamedResponse() {
         guard !self.inputText.isEmpty else { return }
         
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
@@ -209,30 +245,44 @@ class ChatViewModel: ObservableObject {
             
             let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
             Logger.shared.log("Sending messages: \(openAIMessages)")
-            self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
+            
+            var aiChatMessage: ChatMessage? // Initialize outside the streaming closure
+            self.advisorChatAPI.getChatCompletionResponseStreaming(messages: openAIMessages) { result in
+                Logger.shared.log("Received result: \(result)")
                 DispatchQueue.main.async {
-                    if let message = firstMessage {
-                        Logger.shared.log("Received message: \(message.content)")
-                        let AIChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
-                        targetConversation.append(AIChatMessage)
-                        self.conversations[targetConversationId] = targetConversation
-                        targetConversation.save()
-                        
-                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
-                            self.generateSingleTitle(conversation: targetConversation)
+                    switch result {
+                    case .success(let dataChunk):
+                        // let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: dataChunk)
+                        guard let content = dataChunk.choices.first?.delta?.content else {
+                            Logger.shared.log("No content in response chunk")
+                            return
                         }
-                        self.conversations[targetConversationId] = targetConversation
-                    } else {
-                        Logger.shared.log("No message received, or an error occurred")
+                        
+                        if aiChatMessage == nil {
+                            Logger.shared.log("Initializing aiChatMessage")
+                            aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
+                        }
+                        
+                        // Update the message content
+                        Logger.shared.log("Appending content: \(content)")
+                        aiChatMessage?.content += content
+                        
+                        // Update conversation
+                        let targetConversationId = self.activeConversationId
+                        if var targetConversation = self.conversations[targetConversationId],
+                           let message = aiChatMessage {
+                            targetConversation.append(message)
+                            self.conversations[targetConversationId] = targetConversation
+                        }                        
+                    case .failure(let error):
+                        Logger.shared.log("Streaming error: \(error.localizedDescription)")
+                        
                     }
                 }
             }
-        } else {
-            Logger.shared.log("Error in sendMessage: targetConversation is nil")
         }
     }
 }
-
 
 struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
@@ -270,7 +320,7 @@ struct ChatView: View {
                 
                 HStack {
                     CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize) {
-                        viewModel.sendMessage()
+                        viewModel.sendMessageWithStreamedResponse()
                     }
                     
                     AudioCircleIconButton(
@@ -281,7 +331,7 @@ struct ChatView: View {
                         size: entryButtonSize)
                     .keyboardShortcut("m", modifiers: .command)
                     
-                    CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessage, size: entryButtonSize)
+                    CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessageWithStreamedResponse, size: entryButtonSize)
                         .keyboardShortcut(.return, modifiers: .command)
                 }
             }

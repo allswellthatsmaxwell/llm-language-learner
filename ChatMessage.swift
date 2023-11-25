@@ -12,7 +12,7 @@ struct ChatMessage: Identifiable, Codable {
     let id: UUID
     var openAIMessage: OpenAIMessage
     var isUser: Bool // True for user messages, false for AI messages
-    let content: String
+    var content: String
     let audioFilename: String
     
     enum CodingKeys: CodingKey {
