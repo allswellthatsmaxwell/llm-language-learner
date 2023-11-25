@@ -123,7 +123,7 @@ class ChatAPI: OpenAIAPI {
         let messageDicts = allMessages.map { ["role": $0.role, "content": $0.content] }
 
         let requestBody: [String: Any] = [
-            "model": "gpt-3.5-turbo",
+            "model": "gpt-4",
             "messages": messageDicts,
             "stream": true
         ]

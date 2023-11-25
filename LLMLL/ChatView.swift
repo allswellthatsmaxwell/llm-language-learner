@@ -231,7 +231,7 @@ class ChatViewModel: ObservableObject {
 //            Logger.shared.log("Error in sendMessage: targetConversation is nil")
 //        }
 //    }
-//    
+//
     func sendMessageWithStreamedResponse() {
         guard !self.inputText.isEmpty else { return }
         
@@ -247,7 +247,7 @@ class ChatViewModel: ObservableObject {
             Logger.shared.log("Sending messages: \(openAIMessages)")
             
             var aiChatMessage: ChatMessage? // Initialize outside the streaming closure
-            var firstMessage = false
+            var isFirstMessage = false
             self.advisorChatAPI.getChatCompletionResponseStreaming(messages: openAIMessages) { result in
                 Logger.shared.log("Received result: \(result)")
                 DispatchQueue.main.async {
@@ -258,29 +258,36 @@ class ChatViewModel: ObservableObject {
 //                            Logger.shared.log("No content in response chunk")
 //                            return
 //                        }
-                        
-                        if aiChatMessage == nil {
-                            Logger.shared.log("Initializing aiChatMessage")
-                            aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
-                            firstMessage = true
-                        }
-                        
                         // Update the message content
-                        Logger.shared.log("Appending content: \(chatMessage.content)")
-                        aiChatMessage?.content += chatMessage.content
-                        Logger.shared.log("CONTENT: \(aiChatMessage?.content ?? "nil")")
                         
                         
                         // Update conversation
                         let targetConversationId = self.activeConversationId
+                        
+                        if aiChatMessage == nil {
+                            Logger.shared.log("Initializing aiChatMessage")
+                            aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
+                            isFirstMessage = true
+                        }
+                        
                         if var targetConversation = self.conversations[targetConversationId],
                            let message = aiChatMessage {
-                            if firstMessage {
+                            Logger.shared.log("Appending content: \(chatMessage.content)")
+                            aiChatMessage?.content += chatMessage.content
+                            Logger.shared.log("CONTENT: \(aiChatMessage?.content ?? "nil")")
+                            
+                            if isFirstMessage {
                                 targetConversation.append(message)
-                                firstMessage = false
+                                isFirstMessage = false
+                            } else {
+                                if var lastMessage = targetConversation.messages.last {
+                                    lastMessage.content += chatMessage.content
+                                    targetConversation.messages[targetConversation.messages.count - 1] = lastMessage
+                                }
                             }
                             self.conversations[targetConversationId] = targetConversation
-                        }                        
+                            Logger.shared.log("Conversation updated!")
+                        }
                     case .failure(let error):
                         Logger.shared.log("Streaming error: \(error.localizedDescription)")
                         
