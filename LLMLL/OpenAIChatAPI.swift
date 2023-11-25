@@ -123,7 +123,7 @@ class ChatAPI: OpenAIAPI {
         let messageDicts = allMessages.map { ["role": $0.role, "content": $0.content] }
 
         let requestBody: [String: Any] = [
-            "model": "gpt-4",
+            "model": "gpt-4-1106-preview",
             "messages": messageDicts,
             "stream": true
         ]
@@ -135,18 +135,26 @@ class ChatAPI: OpenAIAPI {
             return
         }
 
+        
+        Logger.shared.log("getChatCompletionResponseStreaming: about to enter URLSession.shared.dataTask")
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 // Handle error
                 return
             }
-
+            
             guard let data = data else {
                 // Handle error: no data
                 return
             }
-
-            self.processStreamedData(data, completion)
+            
+            Logger.shared.log("getChatCompletionResponseStreaming: about to call processStreamedData")
+            self.processStreamedData(data) { chatMessage in
+                
+                DispatchQueue.main.async {
+                    completion(chatMessage)
+                }
+            }
         }
 
         task.resume()
@@ -176,9 +184,13 @@ class ChatAPI: OpenAIAPI {
                 // Replace OpenAIResponse with your appropriate response model
                 let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: jsonData)
                 Logger.shared.log("processStreamedData: Successfully decoded JSON")
-                DispatchQueue.main.async {
-                    self.processIncomingMessage(responseChunk, completion)
+                
+                self.processIncomingMessage(responseChunk) { chatMessage in
+                    DispatchQueue.main.async {
+                        completion(chatMessage)
+                    }
                 }
+                
             } catch {
                 Logger.shared.log("processStreamedData: Failed to decode JSON")
             }
