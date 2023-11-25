@@ -115,7 +115,7 @@ class ChatAPI: OpenAIAPI {
         }
     }
     
-    func getChatCompletionResponseStreaming(messages: [OpenAIMessage], completion: @escaping (Result<OpenAIStreamingResponse, Error>) -> Void) {
+    func getChatCompletionResponseStreaming(messages: [OpenAIMessage], completion: @escaping (Result<ChatMessage, Error>) -> Void) {
         Logger.shared.log("Entered getChatCompletionResponseStreaming")
         guard var request = constructRequest(url: url) else { return }
 
@@ -146,13 +146,13 @@ class ChatAPI: OpenAIAPI {
                 return
             }
 
-            self.processStreamedData(data)
+            self.processStreamedData(data, completion)
         }
 
         task.resume()
     }
     
-    private func processStreamedData(_ data: Data) {
+    private func processStreamedData(_ data: Data, _ completion: @escaping (Result<ChatMessage, Error>) -> Void) {
         Logger.shared.log("processStreamedData")
         // Assuming the data is UTF8 encoded
         guard let string = String(data: data, encoding: .utf8) else {
@@ -177,7 +177,7 @@ class ChatAPI: OpenAIAPI {
                 let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: jsonData)
                 Logger.shared.log("processStreamedData: Successfully decoded JSON")
                 DispatchQueue.main.async {
-                    self.processIncomingMessage(responseChunk)
+                    self.processIncomingMessage(responseChunk, completion)
                 }
             } catch {
                 Logger.shared.log("processStreamedData: Failed to decode JSON")
@@ -185,14 +185,14 @@ class ChatAPI: OpenAIAPI {
         }
     }
     
-    private func processIncomingMessage(_ responseChunk: OpenAIStreamingResponse) {
+    private func processIncomingMessage(_ responseChunk: OpenAIStreamingResponse, _ completion: @escaping (Result<ChatMessage, Error>) -> Void) {
         Logger.shared.log("processIncomingMessage")
         guard let delta = responseChunk.choices.first?.delta else {
             return
         }
 
         let message = ChatMessage(msg: OpenAIMessage(AIContent: delta.content ?? ""))
-        
+        completion(.success(message))
     }
     
     func sendMessages(messages: [OpenAIMessage], completion: @escaping (OpenAIMessage?) -> Void) {

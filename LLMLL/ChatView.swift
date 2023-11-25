@@ -247,31 +247,38 @@ class ChatViewModel: ObservableObject {
             Logger.shared.log("Sending messages: \(openAIMessages)")
             
             var aiChatMessage: ChatMessage? // Initialize outside the streaming closure
+            var firstMessage = false
             self.advisorChatAPI.getChatCompletionResponseStreaming(messages: openAIMessages) { result in
                 Logger.shared.log("Received result: \(result)")
                 DispatchQueue.main.async {
                     switch result {
-                    case .success(let dataChunk):
+                    case .success(let chatMessage):
                         // let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: dataChunk)
-                        guard let content = dataChunk.choices.first?.delta?.content else {
-                            Logger.shared.log("No content in response chunk")
-                            return
-                        }
+//                        guard let content = dataChunk.choices.first?.delta?.content else {
+//                            Logger.shared.log("No content in response chunk")
+//                            return
+//                        }
                         
                         if aiChatMessage == nil {
                             Logger.shared.log("Initializing aiChatMessage")
                             aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
+                            firstMessage = true
                         }
                         
                         // Update the message content
-                        Logger.shared.log("Appending content: \(content)")
-                        aiChatMessage?.content += content
+                        Logger.shared.log("Appending content: \(chatMessage.content)")
+                        aiChatMessage?.content += chatMessage.content
+                        Logger.shared.log("CONTENT: \(aiChatMessage?.content ?? "nil")")
+                        
                         
                         // Update conversation
                         let targetConversationId = self.activeConversationId
                         if var targetConversation = self.conversations[targetConversationId],
                            let message = aiChatMessage {
-                            targetConversation.append(message)
+                            if firstMessage {
+                                targetConversation.append(message)
+                                firstMessage = false
+                            }
                             self.conversations[targetConversationId] = targetConversation
                         }                        
                     case .failure(let error):
