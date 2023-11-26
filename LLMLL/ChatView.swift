@@ -183,7 +183,8 @@ class ChatViewModel: ObservableObject {
                 do {
                     let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)
                     DispatchQueue.main.async {
-                        self?.inputText = transcriptionResult.text
+                        
+                        self?.inputText += transcriptionResult.text
                         Logger.shared.log("inputText set to transcript: " + transcriptionResult.text)
                     }
                     Logger.shared.log("Transcription Received")

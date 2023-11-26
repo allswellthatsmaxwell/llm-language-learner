@@ -273,6 +273,8 @@ Therefore, you should do your best to interpret what they are trying to say.
 * Do not include the english pronunciation. A separate utility will pronounce the Korean you provide, using text-to-speech technology.
 
 Make sure to put the correct hangul first, on its own line.
+
+The user will be seeing your output directly, so speak to them directly.
 """
     }
 }
