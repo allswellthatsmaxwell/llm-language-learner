@@ -105,8 +105,8 @@ class ChatAPI: OpenAIAPI {
         
         do {
             let requestBody: [String: Any] = [
-                // "model": "gpt-4-1106-preview",
-                "model": "gpt-3.5-turbo", // -1106
+                "model": "gpt-4-1106-preview",
+                // "model": "gpt-3.5-turbo-1106",
                 "messages": messageDicts,
                 "stream": false
             ]
@@ -236,7 +236,6 @@ class ChatStreamingAPI: ChatAPI {
                     Logger.shared.log("finish_reason: \(finishReason)")
                     if finishReason == "stop" {
                         DispatchQueue.main.async { streamCompletion() }
-                        break
                     }
                 }
             } catch {

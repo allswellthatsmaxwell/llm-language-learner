@@ -39,8 +39,6 @@ class ChatViewModel: ObservableObject {
     private let extractorChatAPI = ExtractorChatAPI()
     private var titlerChatAPI = TitlerChatAPI()
     
-    let conversationQueue = DispatchQueue(label: "com.LLMLL.conversationQueue")
-    
     @Published var isLoading: Bool = false
     
     init() {
@@ -245,34 +243,23 @@ class ChatViewModel: ObservableObject {
             targetConversation.append(userMessage)
             self.conversations[targetConversationId] = targetConversation
             
-            receiveStreamedResponse(targetConversation, targetConversationId) {
-                Logger.shared.log("in receiveStreamedResponse completion block")
-                if let targetConversation = self.conversations[targetConversationId] {
-                    if targetConversation.messages.count >= 2 {
-                        Logger.shared.log("Saving conversation.")
-                        DispatchQueue.main.async { targetConversation.save() }
-                    }
-                    Logger.shared.log("Title: \(targetConversation.title)")
-                    if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
-                        Logger.shared.log("Generating title")
-                        DispatchQueue.main.async { self.generateSingleTitle(conversation: targetConversation) }
-                        
-                    }
-                }
-            }
+            receiveStreamedResponse(targetConversation, targetConversationId)
         }
     }
     
-    private func receiveStreamedResponse(_ targetConversation: ChatConversation, _ targetConversationId: UUID, streamCompletion: @escaping (() -> Void)) {
+    private func receiveStreamedResponse(_ targetConversation: ChatConversation, _ targetConversationId: UUID) {
         
         let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
         Logger.shared.log("Sending messages: \(openAIMessages)")
         
+        let dispatchGroup = DispatchGroup()
+
         var isFirstMessage = true
         self.advisorChatAPI.getChatCompletionResponse(
             messages: openAIMessages,
             chunkCompletion: { result in
                 Logger.shared.log("Received result: \(result)")
+                dispatchGroup.enter()
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let chatMessage):
@@ -290,10 +277,25 @@ class ChatViewModel: ObservableObject {
                     case .failure(let error):
                         Logger.shared.log("Streaming error: \(error.localizedDescription)")
                     }
-                    
+                    dispatchGroup.leave()
                 }
             },
-            streamCompletion: { streamCompletion() })
+            streamCompletion: {
+                dispatchGroup.notify(queue: DispatchQueue.main) {
+                    if let targetConversation = self.conversations[targetConversationId] {
+                        if targetConversation.messages.count >= 2 {
+                            Logger.shared.log("Saving conversation.")
+                            DispatchQueue.main.async { targetConversation.save() }
+                        }
+                        Logger.shared.log("Title: \(targetConversation.title)")
+                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
+                            Logger.shared.log("Generating title")
+                            DispatchQueue.main.async { self.generateSingleTitle(conversation: targetConversation) }
+                            
+                        }
+                    }
+                }
+            })
     }
     
     
