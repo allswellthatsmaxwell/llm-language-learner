@@ -167,21 +167,20 @@ class ChatStreamingAPI: ChatAPI {
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         } catch {
-            // Handle error
+            Logger.shared.log("ChatStreamingAPI.getChatCompletionResponse: Error when constructing httpBody: \(error.localizedDescription)")
             return
         }
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                // Handle error
+                Logger.shared.log("ChatStreamingAPI.getChatCompletionResponse: Error in shared.dataTask: \(error.localizedDescription)")
                 return
             }
             
             guard let data = data else {
-                // Handle error: no data
+                Logger.shared.log("ChatStreamingAPI.getChatCompletionResponse: No data received")
                 return
             }
-                        
             self.processStreamedData(
                 data,
                 chunkCompletion: { chatMessage in DispatchQueue.main.async { chunkCompletion(chatMessage) } },
@@ -215,7 +214,6 @@ class ChatStreamingAPI: ChatAPI {
             
             do {
                 let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: jsonData)
-                // Logger.shared.log("processStreamedData: Successfully decoded JSON")
                 
                 self.processIncomingMessage(responseChunk) { result in
                     switch result {
@@ -230,10 +228,8 @@ class ChatStreamingAPI: ChatAPI {
                     }
                 }
                 
-                
                 if let firstChoice = responseChunk.choices.first,
                    let finishReason = firstChoice.finish_reason {
-                    Logger.shared.log("finish_reason: \(finishReason)")
                     if finishReason == "stop" {
                         DispatchQueue.main.async { streamCompletion() }
                     }
