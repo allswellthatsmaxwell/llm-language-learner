@@ -26,6 +26,7 @@ extension ChatAPIError: LocalizedError {
         }
     }
 }
+
 class OpenAIMessage: Codable {
     var role: String
     var content: String
@@ -80,7 +81,8 @@ struct OpenAIStreamingResponse: Codable {
 }
 
 struct Choice: Codable {
-    var message: OpenAIMessage
+    let message: OpenAIMessage
+    let finish_reason: String?
 }
 
 
@@ -114,98 +116,7 @@ class ChatAPI: OpenAIAPI {
             completion(.failure(error))
         }
     }
-    
-    func getChatCompletionResponseStreaming(messages: [OpenAIMessage], completion: @escaping (Result<ChatMessage, Error>) -> Void) {
-        Logger.shared.log("Entered getChatCompletionResponseStreaming")
-        guard var request = constructRequest(url: url) else { return }
-
-        let allMessages = [OpenAIMessage(systemContent: self.systemPrompt)] + messages
-        let messageDicts = allMessages.map { ["role": $0.role, "content": $0.content] }
-
-        let requestBody: [String: Any] = [
-            "model": "gpt-4-1106-preview",
-            "messages": messageDicts,
-            "stream": true
-        ]
-
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        } catch {
-            // Handle error
-            return
-        }
-
         
-        Logger.shared.log("getChatCompletionResponseStreaming: about to enter URLSession.shared.dataTask")
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                // Handle error
-                return
-            }
-            
-            guard let data = data else {
-                // Handle error: no data
-                return
-            }
-            
-            Logger.shared.log("getChatCompletionResponseStreaming: about to call processStreamedData")
-            self.processStreamedData(data) { chatMessage in
-                
-                DispatchQueue.main.async {
-                    completion(chatMessage)
-                }
-            }
-        }
-
-        task.resume()
-    }
-    
-    private func processStreamedData(_ data: Data, _ completion: @escaping (Result<ChatMessage, Error>) -> Void) {
-        Logger.shared.log("processStreamedData")
-        // Assuming the data is UTF8 encoded
-        guard let string = String(data: data, encoding: .utf8) else {
-            Logger.shared.log("processStreamedData: failed to convert data to string")
-            return
-        }
-        
-        // Split the string by newlines to process each JSON object separately
-        let jsonStrings = string.components(separatedBy: "\n")
-        
-        for jsonString in jsonStrings {
-            Logger.shared.log("Attempting to decode JSON string: \(jsonString)")
-            let cleanedJsonString = jsonString.replacingOccurrences(of: "data: ", with: "")
-            guard !cleanedJsonString.isEmpty,
-                  let jsonData = cleanedJsonString.data(using: .utf8) else {
-                Logger.shared.log("processStreamedData: JSON data is empty, or failed to convert to data")
-                continue
-            }
-            
-            do {
-                // Replace OpenAIResponse with your appropriate response model
-                let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: jsonData)
-                Logger.shared.log("processStreamedData: Successfully decoded JSON")
-                
-                self.processIncomingMessage(responseChunk) { chatMessage in
-                    DispatchQueue.main.async {
-                        completion(chatMessage)
-                    }
-                }
-                
-            } catch {
-                Logger.shared.log("processStreamedData: Failed to decode JSON")
-            }
-        }
-    }
-    
-    private func processIncomingMessage(_ responseChunk: OpenAIStreamingResponse, _ completion: @escaping (Result<ChatMessage, Error>) -> Void) {
-        Logger.shared.log("processIncomingMessage")
-        guard let delta = responseChunk.choices.first?.delta else {
-            return
-        }
-
-        let message = ChatMessage(msg: OpenAIMessage(AIContent: delta.content ?? ""))
-        completion(.success(message))
-    }
     
     func sendMessages(messages: [OpenAIMessage], completion: @escaping (OpenAIMessage?) -> Void) {
         self.getChatCompletionResponse(messages: messages) { result in
@@ -236,7 +147,117 @@ class ChatAPI: OpenAIAPI {
     }
 }
 
-class AdvisorChatAPI: ChatAPI {
+class ChatStreamingAPI: ChatAPI {
+    func getChatCompletionResponse(messages: [OpenAIMessage], 
+                                   chunkCompletion: @escaping (Result<ChatMessage, Error>) -> Void,
+                                   streamCompletion: @escaping () -> Void) {
+        Logger.shared.log("Entered getChatCompletionResponseStreaming")
+        guard var request = constructRequest(url: url) else { return }
+        
+        let allMessages = [OpenAIMessage(systemContent: self.systemPrompt)] + messages
+        let messageDicts = allMessages.map { ["role": $0.role, "content": $0.content] }
+        
+        let requestBody: [String: Any] = [
+            "model": "gpt-4-1106-preview",
+            "messages": messageDicts,
+            "stream": true
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        } catch {
+            // Handle error
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                // Handle error
+                return
+            }
+            
+            guard let data = data else {
+                // Handle error: no data
+                return
+            }
+                        
+            self.processStreamedData(
+                data,
+                chunkCompletion: { chatMessage in DispatchQueue.main.async { chunkCompletion(chatMessage) } },
+                streamCompletion: { DispatchQueue.main.async { streamCompletion() } })
+        }
+        
+        task.resume()
+    }
+    
+    private func processStreamedData(_ data: Data, 
+                                     chunkCompletion: @escaping (Result<ChatMessage, Error>) -> Void,
+                                     streamCompletion: @escaping () -> Void) {
+        Logger.shared.log("processStreamedData")
+        // Assuming the data is UTF8 encoded
+        guard let string = String(data: data, encoding: .utf8) else {
+            Logger.shared.log("processStreamedData: failed to convert data to string")
+            return
+        }
+        
+        // Split the string by newlines to process each JSON object separately
+        let jsonStrings = string.components(separatedBy: "\n")
+        
+        for jsonString in jsonStrings {
+            Logger.shared.log("Attempting to decode JSON string: \(jsonString)")
+            let cleanedJsonString = jsonString.replacingOccurrences(of: "data: ", with: "")
+            guard !cleanedJsonString.isEmpty,
+                  let jsonData = cleanedJsonString.data(using: .utf8) else {
+                Logger.shared.log("processStreamedData: JSON data is empty, or failed to convert to data")
+                continue
+            }
+            
+            do {
+                let responseChunk = try JSONDecoder().decode(OpenAIStreamingResponse.self, from: jsonData)
+                // Logger.shared.log("processStreamedData: Successfully decoded JSON")
+                
+                self.processIncomingMessage(responseChunk) { result in
+                    switch result {
+                    case .success(let chatMessage):
+                        DispatchQueue.main.async {
+                            chunkCompletion(.success(chatMessage))
+                        }
+                    case .failure(let error):
+                        DispatchQueue.main.async {
+                            chunkCompletion(.failure(error))
+                        }
+                    }
+                }
+                
+                
+                if let firstChoice = responseChunk.choices.first,
+                   let finishReason = firstChoice.finish_reason {
+                    Logger.shared.log("finish_reason: \(finishReason)")
+                    if finishReason == "stop" {
+                        DispatchQueue.main.async { streamCompletion() }
+                        break
+                    }
+                }
+            } catch {
+                Logger.shared.log("processStreamedData: Failed to decode JSON")
+            }
+        }
+    }
+    
+    private func processIncomingMessage(_ responseChunk: OpenAIStreamingResponse, 
+                                        _ chunkCompletion: @escaping (Result<ChatMessage, Error>) -> Void) {
+        Logger.shared.log("\(responseChunk)")
+        guard let delta = responseChunk.choices.first?.delta else {
+            return
+        }
+        
+        let message = ChatMessage(msg: OpenAIMessage(AIContent: delta.content ?? ""))
+        chunkCompletion(.success(message))
+    }
+}
+    
+
+class AdvisorChatAPI: ChatStreamingAPI {
     override var systemPrompt: String {
         return """
 You are to act as a teacher for Korean language and grammar, for a student who speaks English as their first language.
