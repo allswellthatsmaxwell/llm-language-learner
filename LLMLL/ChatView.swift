@@ -126,17 +126,18 @@ class ChatViewModel: ObservableObject {
     
     func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
         toggleLoadingState() // turn on
+        Logger.shared.log("processAndSynthesizeAudio: received message parameter '\(message.openAIMessage.content)'")
         self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
             // TODO: When sendMessages fails to return, that failure doesn't make it back here, so we never execute any
             // of the code in this block. So the loading-spinny on the "speak this text" button spins forever.
             // We need to propogate that error up here, and toggle the loading state in that case too.
-            guard let message = firstMessage else {
+            guard let extractedMessage = firstMessage else {
                 toggleLoadingState() // turn off
                 Logger.shared.log("extractor/speaker: No message received, or an error occurred")
                 return
             }
-            Logger.shared.log("Received message: \(message.content)")
-            self.textToSpeechAPI.synthesizeSpeech(from: message.content) { [weak self] result in
+            Logger.shared.log("processAndSynthesizeAudio: Extractor returned: \(extractedMessage.content)")
+            self.textToSpeechAPI.synthesizeSpeech(from: extractedMessage.content) { [weak self] result in
                 switch result {
                 case .success(let audioData):
                     do {
@@ -302,7 +303,7 @@ class ChatViewModel: ObservableObject {
     
     func updateResponseText(_ chatMessage: ChatMessage, _ targetConversation: inout ChatConversation, _ targetConversationId: UUID) {
         if var lastMessage = targetConversation.messages.last {
-            lastMessage.content += chatMessage.content
+            lastMessage = lastMessage.appendContent(chatMessage.content)
             targetConversation.messages[targetConversation.messages.count - 1] = lastMessage
             self.conversations[targetConversationId] = targetConversation
         } else {

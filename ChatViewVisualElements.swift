@@ -12,7 +12,7 @@ import SwiftUI
 private var circleButtonTopBottomPadding = CGFloat(12)
 private var circleButtonLeadingTrailingPadding = CGFloat(8)
 
-struct CircleIconButton: View {
+struct SpeakerButton: View {
     let iconName: String
     let action: () -> Void
     let longPressAction: () -> Void
@@ -54,6 +54,28 @@ struct CircleIconButton: View {
                         action()
                     }
             )
+    }
+}
+
+struct CircleIconButton: View {
+    let iconName: String
+    let action: () -> Void
+    let size: CGFloat
+    @State private var isHovering = false
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: iconName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+                .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding([.top, .bottom], 12)
+        .padding([.leading, .trailing], 8)
+        .onHover { hovering in isHovering = hovering }
     }
 }
 
@@ -131,13 +153,12 @@ struct MessageBubble: View {
             
             if !self.message.isUser { Spacer() } // Left-align AI messages
             if self.isLoading {
-                // Display a loading indicator or alternative icon
                 ProgressView()
                     .frame(width: self.listenButtonSize, height: self.listenButtonSize)
                     .padding([.top, .bottom], circleButtonTopBottomPadding)
                     .padding([.leading, .trailing], circleButtonLeadingTrailingPadding)
             } else {
-                CircleIconButton(
+                SpeakerButton(
                     iconName: "speaker.circle",
                     action: {
                         self.viewModel.hearButtonTapped(for: self.message, completion: { self.isLoading.toggle() })

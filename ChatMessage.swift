@@ -44,6 +44,13 @@ struct ChatMessage: Identifiable, Codable {
         try container.encode(content, forKey: .content)
         try container.encode(audioFilename, forKey: .audioFilename)
     }
+    
+    func appendContent(_ newContent: String) -> ChatMessage {
+        var newMessage = self
+        newMessage.content += newContent
+        newMessage.openAIMessage.content += newContent
+        return newMessage
+    }
 }
 
 

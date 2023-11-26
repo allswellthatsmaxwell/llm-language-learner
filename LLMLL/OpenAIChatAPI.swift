@@ -284,6 +284,8 @@ class ExtractorChatAPI: ChatAPI {
         return """
 Extract the Korean Hangul text from the first part of the message the user gives you. Only extract the Hangul word/phrase/sentence/paragraph/text.
 Don't extract any English. Return only the Hangul you extract, with no additional text. No English whatsoever!
+
+If there is no Hangul, return "Sorry, no Korean text found", in English.
 """
     }
 }
