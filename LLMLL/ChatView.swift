@@ -39,6 +39,8 @@ class ChatViewModel: ObservableObject {
     private let extractorChatAPI = ExtractorChatAPI()
     private var titlerChatAPI = TitlerChatAPI()
     
+    let conversationQueue = DispatchQueue(label: "com.LLMLL.conversationQueue")
+    
     @Published var isLoading: Bool = false
     
     init() {
@@ -237,6 +239,7 @@ class ChatViewModel: ObservableObject {
         
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
         let targetConversationId = self.activeConversationId
+
         if var targetConversation = self.conversations[targetConversationId] {
             DispatchQueue.main.async { self.inputText = "" }
             targetConversation.append(userMessage)
@@ -265,8 +268,7 @@ class ChatViewModel: ObservableObject {
         let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
         Logger.shared.log("Sending messages: \(openAIMessages)")
         
-        var aiChatMessage: ChatMessage? // Initialize outside the streaming closure
-        var isFirstMessage = false
+        var isFirstMessage = true
         self.advisorChatAPI.getChatCompletionResponse(
             messages: openAIMessages,
             chunkCompletion: { result in
@@ -275,21 +277,9 @@ class ChatViewModel: ObservableObject {
                     switch result {
                     case .success(let chatMessage):
                         let targetConversationId = self.activeConversationId
-                        
-                        if aiChatMessage == nil {
-                            Logger.shared.log("Initializing aiChatMessage")
-                            aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
-                            isFirstMessage = true
-                        }
-                        
-                        if var targetConversation = self.conversations[targetConversationId],
-                           let message = aiChatMessage {
-                            // Logger.shared.log("Appending content: \(chatMessage.content)")
-                            aiChatMessage?.content += chatMessage.content
-                            // Logger.shared.log("CONTENT: \(aiChatMessage?.content ?? "nil")")
-                            
+                        if var targetConversation = self.conversations[targetConversationId] {
                             if isFirstMessage {
-                                targetConversation.append(message)
+                                targetConversation.append(chatMessage)
                                 self.conversations[targetConversationId] = targetConversation
                                 isFirstMessage = false
                             } else {

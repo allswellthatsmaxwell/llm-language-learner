@@ -108,7 +108,7 @@ class ChatAPI: OpenAIAPI {
                 // "model": "gpt-4-1106-preview",
                 "model": "gpt-3.5-turbo", // -1106
                 "messages": messageDicts,
-                "stream": true
+                "stream": false
             ]
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             submitRequest(request: request, completion: completion)
@@ -123,6 +123,7 @@ class ChatAPI: OpenAIAPI {
             switch result {
             case .success(let data):
                 do {
+                    Logger.shared.log("sendMessages: Received response: \(String(data: data, encoding: .utf8) ?? "No data")")
                     let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
                     if let firstMessage = response.choices.first?.message {
                         return completion(firstMessage)
