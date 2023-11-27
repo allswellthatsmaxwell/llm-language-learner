@@ -61,8 +61,23 @@ struct CircleIconButton: View {
     let iconName: String
     let action: () -> Void
     let size: CGFloat
+    var topBottomPadding = CGFloat(12)
+    var leadingTrailingPadding = CGFloat(8)
     @State private var isHovering = false
     @Environment(\.colorScheme) var colorScheme
+    
+    init(iconName: String, action: @escaping () -> Void, size: CGFloat, topBottomPadding: CGFloat? = nil, leadingTrailingPadding: CGFloat? = nil) {
+        self.iconName = iconName
+        self.action = action
+        self.size = size
+        if let topBottomPadding = topBottomPadding {
+            self.topBottomPadding = topBottomPadding
+        }
+        if let leadingTrailingPadding = leadingTrailingPadding {
+            self.leadingTrailingPadding = leadingTrailingPadding
+        }
+        
+    }
     
     var body: some View {
         Button(action: action) {
@@ -73,8 +88,8 @@ struct CircleIconButton: View {
                 .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
         }
         .buttonStyle(PlainButtonStyle())
-        .padding([.top, .bottom], 12)
-        .padding([.leading, .trailing], 8)
+        .padding([.top, .bottom], self.topBottomPadding)
+        .padding([.leading, .trailing], self.leadingTrailingPadding)
         .onHover { hovering in isHovering = hovering }
     }
 }
@@ -97,14 +112,13 @@ struct SlowModeButtonView: View {
     @ObservedObject var viewModel: ChatViewModel
 
     var body: some View {
-        Button(action: { self.viewModel.toggleSlowMode() }) {
-            Image(systemName: self.viewModel.slowMode ? "tortoise.circle.fill" : "tortoise.circle")
-                .resizable()
-                .frame(width: 40, height: 40)
-                .padding([.leading, .trailing], 8)
-                .padding([.top], 2)
-        }
-        .buttonStyle(PlainButtonStyle())
+        CircleIconButton(
+            iconName: self.viewModel.slowMode ? "tortoise.circle.fill" : "tortoise.circle",
+            action: { self.viewModel.toggleSlowMode() },
+            size: 30,
+            topBottomPadding: 0,
+            leadingTrailingPadding: 0
+        )
     }
 }
 
@@ -121,7 +135,7 @@ struct NewConversationButtonView: View {
                 .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
         }
         .buttonStyle(PlainButtonStyle())
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(alignment: .trailing)
         .padding([.top], 14)
         .onHover { hovering in isHovering = hovering }
         Divider()

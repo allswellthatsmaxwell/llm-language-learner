@@ -311,21 +311,22 @@ struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     private let entryButtonSize = CGFloat(65)
     private let fontSize = CGFloat(18)
-    
-    
+        
     var body: some View {
         HStack {
-            ScrollView {
-                VStack(alignment: .leading) {
-                    HStack {
-                        SlowModeButtonView(viewModel: self.viewModel)
+            ZStack (alignment: .topLeading) {
+                ScrollView {
+                    VStack {
                         NewConversationButtonView(action: { self.viewModel.addNewConversation() })
+                            .keyboardShortcut("n", modifiers: .command)
+                        ConversationsListView(viewModel: self.viewModel)
                     }
-                    
-                    ConversationsListView(viewModel: self.viewModel)
                 }
+                .frame(width: 200)
+                
+                SlowModeButtonView(viewModel: self.viewModel)
+                    .keyboardShortcut("s", modifiers: .command)
             }
-            .frame(width: 200)
             
             DividerLine(width: 1)
             
