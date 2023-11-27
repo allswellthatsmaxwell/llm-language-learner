@@ -143,15 +143,23 @@ struct MessageBubble: View {
         HStack {
             if self.message.isUser { Spacer() } // Right-align user messages
             
-            Text(self.message.content)
-                .padding()
-                .background(self.getBackgroundColor())
-                .cornerRadius(10)
-                .font(.system(size: self.fontSize))
-                .foregroundColor(self.getForegroundColor())
-                .textSelection(.enabled)
-            
+            if self.message.content.isEmpty {
+                ProgressView()
+                    .frame(width: 30, height: 30)
+                    .padding()
+                    .background(self.getBackgroundColor())
+                    .cornerRadius(10)
+            } else {
+                Text(self.message.content)
+                    .padding()
+                    .background(self.getBackgroundColor())
+                    .cornerRadius(10)
+                    .font(.system(size: self.fontSize))
+                    .foregroundColor(self.getForegroundColor())
+                    .textSelection(.enabled)
+            }
             if !self.message.isUser { Spacer() } // Left-align AI messages
+            
             if self.isLoading {
                 ProgressView()
                     .frame(width: self.listenButtonSize, height: self.listenButtonSize)

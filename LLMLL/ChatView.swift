@@ -198,41 +198,41 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    func sendMessage() {
-        guard !self.inputText.isEmpty else { return }
-        
-        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
-        let targetConversationId = self.activeConversationId
-        
-        if var targetConversation = self.conversations[targetConversationId] {
-            DispatchQueue.main.async { self.inputText = "" }
-            targetConversation.append(userMessage)
-            self.conversations[targetConversationId] = targetConversation
-            
-            let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
-            Logger.shared.log("Sending messages: \(openAIMessages)")
-            self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
-                DispatchQueue.main.async {
-                    if let message = firstMessage {
-                        Logger.shared.log("Received message: \(message.content)")
-                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
-                        targetConversation.append(aiChatMessage)
-                        self.conversations[targetConversationId] = targetConversation
-                        targetConversation.save()
-                        
-                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
-                            self.generateSingleTitle(conversation: targetConversation)
-                        }
-                        self.conversations[targetConversationId] = targetConversation
-                    } else {
-                        Logger.shared.log("No message received, or an error occurred")
-                    }
-                }
-            }
-        } else {
-            Logger.shared.log("Error in sendMessage: targetConversation is nil")
-        }
-    }
+//    func sendMessage() {
+//        guard !self.inputText.isEmpty else { return }
+//        
+//        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
+//        let targetConversationId = self.activeConversationId
+//        
+//        if var targetConversation = self.conversations[targetConversationId] {
+//            DispatchQueue.main.async { self.inputText = "" }
+//            targetConversation.append(userMessage)
+//            self.conversations[targetConversationId] = targetConversation
+//            
+//            let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
+//            Logger.shared.log("Sending messages: \(openAIMessages)")
+//            self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
+//                DispatchQueue.main.async {
+//                    if let message = firstMessage {
+//                        Logger.shared.log("Received message: \(message.content)")
+//                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
+//                        targetConversation.append(aiChatMessage)
+//                        self.conversations[targetConversationId] = targetConversation
+//                        targetConversation.save()
+//                        
+//                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
+//                            self.generateSingleTitle(conversation: targetConversation)
+//                        }
+//                        self.conversations[targetConversationId] = targetConversation
+//                    } else {
+//                        Logger.shared.log("No message received, or an error occurred")
+//                    }
+//                }
+//            }
+//        } else {
+//            Logger.shared.log("Error in sendMessage: targetConversation is nil")
+//        }
+//    }
     
     func sendMessageWithStreamedResponse() {
         guard !self.inputText.isEmpty else { return }
@@ -245,18 +245,20 @@ class ChatViewModel: ObservableObject {
             targetConversation.append(userMessage)
             self.conversations[targetConversationId] = targetConversation
             
-            receiveStreamedResponse(targetConversation, targetConversationId)
+            receiveStreamedResponse(&targetConversation, targetConversationId)
         }
     }
     
-    private func receiveStreamedResponse(_ targetConversation: ChatConversation, _ targetConversationId: UUID) {
+    private func receiveStreamedResponse(_ targetConversation: inout ChatConversation, _ targetConversationId: UUID) {
         
         let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
         Logger.shared.log("Sending messages: \(openAIMessages)")
         
         let dispatchGroup = DispatchGroup()
 
-        var isFirstMessage = true
+        let emptyMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
+        targetConversation.append(emptyMessage)
+        self.conversations[targetConversationId] = targetConversation
         self.advisorChatAPI.getChatCompletionResponse(
             messages: openAIMessages,
             chunkCompletion: { result in
@@ -267,15 +269,9 @@ class ChatViewModel: ObservableObject {
                     case .success(let chatMessage):
                         let targetConversationId = self.activeConversationId
                         if var targetConversation = self.conversations[targetConversationId] {
-                            if isFirstMessage {
-                                targetConversation.append(chatMessage)
-                                self.conversations[targetConversationId] = targetConversation
-                                isFirstMessage = false
-                            } else {
-                                self.updateResponseText(chatMessage, &targetConversation, targetConversationId)
-                            }
-                            // Logger.shared.log("Conversation updated!")
+                            self.updateResponseText(chatMessage, &targetConversation, targetConversationId)
                         }
+                            // Logger.shared.log("Conversation updated!")
                     case .failure(let error):
                         Logger.shared.log("Streaming error: \(error.localizedDescription)")
                     }
