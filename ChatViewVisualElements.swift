@@ -93,6 +93,21 @@ struct AudioCircleIconButton: View {
     }
 }
 
+struct SlowModeButtonView: View {
+    @ObservedObject var viewModel: ChatViewModel
+
+    var body: some View {
+        Button(action: { self.viewModel.toggleSlowMode() }) {
+            Image(systemName: self.viewModel.slowMode ? "tortoise.circle.fill" : "tortoise.circle")
+                .resizable()
+                .frame(width: 40, height: 40)
+                .padding([.leading, .trailing], 8)
+                .padding([.top], 2)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
 struct NewConversationButtonView: View {
     let action: () -> Void
     @State private var isHovering = false

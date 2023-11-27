@@ -1,6 +1,9 @@
 import Foundation
 import AVFoundation
 
+private var normalRate = Float(1.0)
+private var slowRate = Float(0.7)
+
 class AudioPlayerManager {
     private var audioPlayer: AVAudioPlayer?
     var audioEngine = AVAudioEngine()
@@ -8,7 +11,16 @@ class AudioPlayerManager {
     var playerNode: AVAudioPlayerNode?
     
     init() {
+        setRate(slowMode: false)
         audioEngine.attach(timePitch)
+    }
+    
+    func setRate(slowMode: Bool) {
+        if slowMode {
+            self.setRate(slowRate)
+        } else {
+            self.setRate(normalRate)
+        }
     }
     
     func setupPlayerNode(for audioFile: AVAudioFile) {
@@ -21,7 +33,7 @@ class AudioPlayerManager {
         }
     }
     
-    func setRate(_ rate: Float) {
+    private func setRate(_ rate: Float) {
         self.timePitch.rate = rate
         self.timePitch.pitch = -300 * log2(rate)
     }

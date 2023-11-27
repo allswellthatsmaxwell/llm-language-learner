@@ -40,6 +40,7 @@ class ChatViewModel: ObservableObject {
     private var titlerChatAPI = TitlerChatAPI()
     
     @Published var isLoading: Bool = false
+    @Published var slowMode: Bool = false
     
     init() {
         let activeConversation = ChatConversation(messages: [])
@@ -123,9 +124,12 @@ class ChatViewModel: ObservableObject {
         }
     }
     
+    func toggleSlowMode() {
+        self.slowMode.toggle()
+        self.audioPlayer.setRate(slowMode: self.slowMode)
+    }
     
     func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
-        self.audioPlayer.setRate(0.7)
         toggleLoadingState() // turn on
         Logger.shared.log("processAndSynthesizeAudio: received message parameter '\(message.openAIMessage.content)'")
         self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
@@ -308,11 +312,16 @@ struct ChatView: View {
     private let entryButtonSize = CGFloat(65)
     private let fontSize = CGFloat(18)
     
+    
     var body: some View {
         HStack {
             ScrollView {
                 VStack(alignment: .leading) {
-                    NewConversationButtonView(action: { self.viewModel.addNewConversation() })
+                    HStack {
+                        SlowModeButtonView(viewModel: self.viewModel)
+                        NewConversationButtonView(action: { self.viewModel.addNewConversation() })
+                    }
+                    
                     ConversationsListView(viewModel: self.viewModel)
                 }
             }
