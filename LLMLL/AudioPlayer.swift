@@ -35,7 +35,6 @@ class AudioPlayerManager {
     
     private func setRate(_ rate: Float) {
         self.timePitch.rate = rate
-        self.timePitch.pitch = -100 * log2(rate)
     }
     
     func playAudio(audioPathURL: URL, rate: Float = 1.0) throws {
