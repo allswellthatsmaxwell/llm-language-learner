@@ -31,13 +31,15 @@ class ChatViewModel: ObservableObject {
     @Published var titleStore = TitleStore()
     
     @Published var audioRecorder = AudioRecorder()
-    private var audioPlayer: AVAudioPlayer?
+    private var audioPlayer = AudioPlayerManager()
     
     private var advisorChatAPI = AdvisorChatAPI()
     private let transcriptionAPI = TranscriptionAPI()
     private let textToSpeechAPI = TextToSpeechAPI()
     private let extractorChatAPI = ExtractorChatAPI()
     private var titlerChatAPI = TitlerChatAPI()
+    
+    private var audioPlayRate = Float(0.5)
     
     @Published var isLoading: Bool = false
     
@@ -137,13 +139,13 @@ class ChatViewModel: ObservableObject {
                 return
             }
             Logger.shared.log("processAndSynthesizeAudio: Extractor returned: \(extractedMessage.content)")
-            self.textToSpeechAPI.synthesizeSpeech(from: extractedMessage.content) { [weak self] result in
+            self.textToSpeechAPI.synthesizeSpeech(from: extractedMessage.content) { result in
                 switch result {
                 case .success(let audioData):
                     do {
                         try audioData.write(to: audioFilePath)
                         Logger.shared.log("Saved audio file to: \(audioFilePath)")
-                        try self?.playAudio(from: audioData)
+                        try self.audioPlayer.playAudio(audioPathURL: audioFilePath, rate: self.audioPlayRate)
                     } catch {
                         Logger.shared.log("Error saving or playing audio file: \(error)")
                     }
@@ -164,17 +166,11 @@ class ChatViewModel: ObservableObject {
         let audioFilePath = self.getAudioFile(message)
         
         do {
-            let audioData = try Data(contentsOf: audioFilePath)
-            try playAudio(from: audioData)
+            try self.audioPlayer.playAudio(audioPathURL: audioFilePath, rate: self.audioPlayRate)
         } catch {
             Logger.shared.log("Couldn't read audio file: \(error). Extracting foreign text.")
             processAndSynthesizeAudio(message, audioFilePath: audioFilePath, toggleLoadingState: completion)
         }
-    }
-    
-    private func playAudio(from data: Data) throws {
-        audioPlayer = try AVAudioPlayer(data: data)
-        audioPlayer?.play()
     }
     
     private func transcribeAudio(fileURL: URL) {
