@@ -39,8 +39,6 @@ class ChatViewModel: ObservableObject {
     private let extractorChatAPI = ExtractorChatAPI()
     private var titlerChatAPI = TitlerChatAPI()
     
-    private var audioPlayRate = Float(0.5)
-    
     @Published var isLoading: Bool = false
     
     init() {
@@ -127,6 +125,7 @@ class ChatViewModel: ObservableObject {
     
     
     func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
+        self.audioPlayer.setRate(0.7)
         toggleLoadingState() // turn on
         Logger.shared.log("processAndSynthesizeAudio: received message parameter '\(message.openAIMessage.content)'")
         self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
@@ -145,7 +144,7 @@ class ChatViewModel: ObservableObject {
                     do {
                         try audioData.write(to: audioFilePath)
                         Logger.shared.log("Saved audio file to: \(audioFilePath)")
-                        try self.audioPlayer.playAudio(audioPathURL: audioFilePath, rate: self.audioPlayRate)
+                        try self.audioPlayer.playAudio(audioPathURL: audioFilePath)
                     } catch {
                         Logger.shared.log("Error saving or playing audio file: \(error)")
                     }
@@ -166,7 +165,7 @@ class ChatViewModel: ObservableObject {
         let audioFilePath = self.getAudioFile(message)
         
         do {
-            try self.audioPlayer.playAudio(audioPathURL: audioFilePath, rate: self.audioPlayRate)
+            try self.audioPlayer.playAudio(audioPathURL: audioFilePath)
         } catch {
             Logger.shared.log("Couldn't read audio file: \(error). Extracting foreign text.")
             processAndSynthesizeAudio(message, audioFilePath: audioFilePath, toggleLoadingState: completion)
