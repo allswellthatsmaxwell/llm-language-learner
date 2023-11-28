@@ -29,7 +29,9 @@ class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     @Published var conversations: [UUID:ChatConversation] = ChatConversation.loadAll()
     @Published var conversationOrder: [UUID] = []
-    @State var selectedLanguage = "Korean"
+    
+    @Published var selectedLanguage = "Korean"
+    @Published var flagEmoji = "🇰🇷"
     
     @Published var activeConversationId: UUID
     @Published var titleStore = TitleStore()
@@ -77,12 +79,15 @@ class ChatViewModel: ObservableObject {
     }
     
     func setLanguage(_ language: String) throws {
-        if let _ = languageWritingSystems[language] {
+        if let newFlagEmoji = languageFlagEmojiDict[language] {
             self.selectedLanguage = language
+            self.flagEmoji = newFlagEmoji
             self.advisorChatAPI = AdvisorChatAPI(language: language)
             self.extractorChatAPI = ExtractorChatAPI(language: language)
             self.titlerChatAPI = TitlerChatAPI(language: language)
+            Logger.shared.log("Successfully set language to \(language). Flag is \(self.flagEmoji).")
         } else {
+            Logger.shared.log("Failed to set language to \(language).")
             throw LanguageError.unsupportedLanguage
         }
     }
@@ -131,7 +136,10 @@ class ChatViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     if let resultMessage = createdTitle {
                         self.titleStore.addTitle(chatId: conversation.id, title: resultMessage.content)
-                        completion(resultMessage.content.trimmingCharacters(in: CharacterSet(charactersIn: "\"")))
+                                                
+                        let title = resultMessage.content.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                        let titleWithFlag = "\(self.flagEmoji) \(title)"
+                        completion(titleWithFlag)
                     } else {
                         Logger.shared.log("No title received, or an error occurred")
                         completion(defaultChatTitle)

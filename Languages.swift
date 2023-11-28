@@ -67,6 +67,66 @@ let languageWritingSystems: [String: String] = [
     "Welsh": "Welsh alphabet"
 ]
 
+let languageFlagEmojiDict: [String: String] = [
+    "Afrikaans": "🇿🇦",
+    "Arabic": "🇸🇦", // Saudi Arabia, could also be any Arabic-speaking country
+    "Armenian": "🇦🇲",
+    "Azerbaijani": "🇦🇿",
+    "Belarusian": "🇧🇾",
+    "Bosnian": "🇧🇦",
+    "Bulgarian": "🇧🇬",
+    "Catalan": "🏳", // Catalonia does not have an official country flag emoji
+    "Chinese": "🇨🇳",
+    "Croatian": "🇭🇷",
+    "Czech": "🇨🇿",
+    "Danish": "🇩🇰",
+    "Dutch": "🇳🇱",
+    "English": "🇬🇧", // United Kingdom
+    "Estonian": "🇪🇪",
+    "Finnish": "🇫🇮",
+    "French": "🇫🇷",
+    "Galician": "🏳", // Galicia does not have an official country flag emoji
+    "German": "🇩🇪",
+    "Greek": "🇬🇷",
+    "Hebrew": "🇮🇱", // Israel, as Hebrew is predominantly spoken there
+    "Hindi": "🇮🇳",
+    "Hungarian": "🇭🇺",
+    "Icelandic": "🇮🇸",
+    "Indonesian": "🇮🇩",
+    "Italian": "🇮🇹",
+    "Japanese": "🇯🇵",
+    "Kannada": "🇮🇳", // India, as Kannada is a regional language there
+    "Kazakh": "🇰🇿",
+    "Korean": "🇰🇷",
+    "Latvian": "🇱🇻",
+    "Lithuanian": "🇱🇹",
+    "Macedonian": "🇲🇰",
+    "Malay": "🇲🇾", // Malaysia
+    "Marathi": "🇮🇳", // India, as Marathi is a regional language there
+    "Maori": "🇳🇿", // New Zealand
+    "Nepali": "🇳🇵",
+    "Norwegian": "🇳🇴",
+    "Persian": "🇮🇷", // Iran, as Persian is predominantly spoken there
+    "Polish": "🇵🇱",
+    "Portuguese": "🇵🇹", // Portugal, but could also be Brazil
+    "Romanian": "🇷🇴",
+    "Russian": "🇷🇺",
+    "Serbian": "🇷🇸",
+    "Slovak": "🇸🇰",
+    "Slovenian": "🇸🇮",
+    "Spanish": "🇪🇸",
+    "Swahili": "🇰🇪", // Kenya, but Swahili is also spoken in other East African countries
+    "Swedish": "🇸🇪",
+    "Tagalog": "🇵🇭", // Philippines
+    "Tamil": "🇮🇳", // India, as Tamil is a regional language there, but could also be Sri Lanka
+    "Thai": "🇹🇭",
+    "Turkish": "🇹🇷",
+    "Ukrainian": "🇺🇦",
+    "Urdu": "🇵🇰", // Pakistan, though Urdu is also spoken in India
+    "Vietnamese": "🇻🇳",
+    "Welsh": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+]
+
 let languageOptions: [String] = Array(languageWritingSystems.keys)
 
 let languageSpecificRulesDict: [String: String] = [

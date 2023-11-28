@@ -124,7 +124,7 @@ struct SlowModeButtonView: View {
 
 
 struct LanguageSelectorView: View {
-    @State private var selectedLanguage = "English"
+    @State private var selectedLanguage = "Korean"
     @ObservedObject var viewModel: ChatViewModel
     @State private var isHovering = false
     @Environment(\.colorScheme) var colorScheme
