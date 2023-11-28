@@ -16,6 +16,7 @@
 		5B46BD8F2B0CEC7E0037BBC3 /* ChatConversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD8E2B0CEC7E0037BBC3 /* ChatConversation.swift */; };
 		5B46BD952B0D82320037BBC3 /* TitleStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD942B0D82320037BBC3 /* TitleStore.swift */; };
 		5B46BD972B0EF0D00037BBC3 /* ChatViewVisualElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD962B0EF0D00037BBC3 /* ChatViewVisualElements.swift */; };
+		5B46BD992B1585A70037BBC3 /* Languages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B46BD982B1585A70037BBC3 /* Languages.swift */; };
 		5BFE3D5B2B06E43A00203EB3 /* LLMLLApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */; };
 		5BFE3D5F2B06E43A00203EB3 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BFE3D5E2B06E43A00203EB3 /* Item.swift */; };
 		5BFE3D612B06E43B00203EB3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5BFE3D602B06E43B00203EB3 /* Assets.xcassets */; };
@@ -55,6 +56,7 @@
 		5B46BD8E2B0CEC7E0037BBC3 /* ChatConversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatConversation.swift; sourceTree = "<group>"; };
 		5B46BD942B0D82320037BBC3 /* TitleStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleStore.swift; sourceTree = "<group>"; };
 		5B46BD962B0EF0D00037BBC3 /* ChatViewVisualElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewVisualElements.swift; sourceTree = "<group>"; };
+		5B46BD982B1585A70037BBC3 /* Languages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Languages.swift; sourceTree = "<group>"; };
 		5BFE3D572B06E43A00203EB3 /* LLMLL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LLMLL.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5BFE3D5A2B06E43A00203EB3 /* LLMLLApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMLLApp.swift; sourceTree = "<group>"; };
 		5BFE3D5E2B06E43A00203EB3 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
@@ -99,6 +101,7 @@
 		5BFE3D4E2B06E43A00203EB3 = {
 			isa = PBXGroup;
 			children = (
+				5B46BD982B1585A70037BBC3 /* Languages.swift */,
 				5B46BD962B0EF0D00037BBC3 /* ChatViewVisualElements.swift */,
 				5BFE3D892B06F00300203EB3 /* LLMLL.entitlements */,
 				5BFE3D592B06E43A00203EB3 /* LLMLL */,
@@ -307,6 +310,7 @@
 				5B46BD872B0741920037BBC3 /* Logger.swift in Sources */,
 				5B46BD892B096B260037BBC3 /* ChatView.swift in Sources */,
 				5B422AEB2B07213800BC9FB4 /* AudioRecorder.swift in Sources */,
+				5B46BD992B1585A70037BBC3 /* Languages.swift in Sources */,
 				5B46BD972B0EF0D00037BBC3 /* ChatViewVisualElements.swift in Sources */,
 				5B46BD852B07328B0037BBC3 /* AudioPlayer.swift in Sources */,
 			);

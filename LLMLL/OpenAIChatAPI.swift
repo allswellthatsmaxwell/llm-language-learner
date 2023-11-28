@@ -87,6 +87,9 @@ struct Choice: Codable {
 
 
 class ChatAPI: OpenAIAPI {
+    var language: String
+    var writingSystem: String
+    var languageSpecificRules: String
     
     var systemPrompt: String {
         fatalError("Subclasses need to provide their own systemMessage.")
@@ -94,6 +97,12 @@ class ChatAPI: OpenAIAPI {
     
     override var url: String {
         return "https://api.openai.com/v1/chat/completions"
+    }
+    
+    init (language: String) {
+        self.language = language
+        self.writingSystem = languageWritingSystems[language] ?? "the language's characters"
+        self.languageSpecificRules = languageSpecificRulesDict[language] ?? ""
     }
     
     func getChatCompletionResponse(messages: [OpenAIMessage], completion: @escaping (Result<Data, Error>) -> Void) {
@@ -256,23 +265,22 @@ class ChatStreamingAPI: ChatAPI {
 class AdvisorChatAPI: ChatStreamingAPI {
     override var systemPrompt: String {
         return """
-You are to act as a teacher for Korean language and grammar, for a student who speaks English as their first language.
-The user will send you a transcript of them speaking Korean. They spoke it aloud, and the text you receive \
+You are to act as a teacher for \(self.language) language and grammar, for a student who speaks English as their first language.
+The user will send you a transcript of them speaking \(self.language). They spoke it aloud, and the text you receive \
 is the result of a transcription algorithm. The student's pronunciation will not be great, \
 so the transcription may have issues.
 Therefore, you should do your best to interpret what they are trying to say.
 
-* If there are no problems with the Korean you receive, just respond with the original Hangul, as well as the English translation of what you received.
+* If there are no problems with the \(self.language) you receive, just respond with the original \(self.writingSystem), as well as the English translation of what you received.
 * If there are problems:
-  * respond with the corrected word/sentence/phrase/paragraph/whatever (in Hangul)
+  * respond with the corrected word/sentence/phrase/paragraph/whatever (in \(self.language)!)
   * give a breakdown (in English) of the corrections you made.
-    * In the breakdown, list the Hangul you added, removed, or changed, with the description of why.
-    * Use only the 요, not the formal 니다 form, unless the user themselves included a formal 니다 form in their transcription.
-    * Not using the polite form, with 요 in the right places, counts as a mistake you should correct.
+    * In the breakdown, list the \(self.language) you added, removed, or changed, with the description of why.
+\(self.languageSpecificRules)    
   * Finally, give the translation.
-* Do not include the english pronunciation. A separate utility will pronounce the Korean you provide, using text-to-speech technology.
+* Do not include the English pronunciation. A separate utility will pronounce the \(self.language) you provide, using text-to-speech technology.
 
-Make sure to put the correct hangul first, on its own line.
+Make sure to put the correct \(self.language) first, on its own line.
 
 The user will be seeing your output directly, so speak to them directly.
 """
@@ -282,10 +290,11 @@ The user will be seeing your output directly, so speak to them directly.
 class ExtractorChatAPI: ChatAPI {
     override var systemPrompt: String {
         return """
-Extract the Korean Hangul text from the first part of the message the user gives you. Only extract the Hangul word/phrase/sentence/paragraph/text.
-Don't extract any English. Return only the Hangul you extract, with no additional text. No English whatsoever!
+Extract the \(self.language) text from the first part of the message the user gives you. Only extract the \(self.language) word/phrase/sentence/paragraph/text.
+Don't extract any English. Return only the \(self.language) you extract, with no additional text. No English whatsoever!
 
-If there is no Hangul, return "Sorry, no Korean text found", in English. If there is some Hangul - any Hangul at all! - make sure to return it.
+If there is no \(self.language), return "Sorry, no \(self.language) text found", in English. \
+If there is some \(self.language) - any \(self.language) at all! - make sure to return it.
 """
     }
 }
@@ -294,8 +303,8 @@ If there is no Hangul, return "Sorry, no Korean text found", in English. If ther
 class TitlerChatAPI: ChatAPI {
     override var systemPrompt: String {
         return """
-The user will give you a conversation about the Korean language. Return a good, succinct title for the conversation. This is \
-in the context of a Korean-learning app, so don't include concepts like "learning" or "Korean" in the title.
+The user will give you a conversation about the \(self.language) language. Return a good, succinct title for the conversation. This is \
+in the context of a \(self.language)-learning app, so don't include concepts like "learning" or "\(self.language)" in the title, since they'd be redundant.
 """
     }
 }
