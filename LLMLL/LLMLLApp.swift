@@ -26,7 +26,9 @@ struct LLMLLApp: App {
     var body: some Scene {
         WindowGroup {
             ChatView()
+                
         }
         .modelContainer(sharedModelContainer)
+        .windowStyle(HiddenTitleBarWindowStyle())
     }
 }

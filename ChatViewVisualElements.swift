@@ -126,6 +126,8 @@ struct SlowModeButtonView: View {
 struct LanguageSelectorView: View {
     @State private var selectedLanguage = "English"
     @ObservedObject var viewModel: ChatViewModel
+    @State private var isHovering = false
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         Menu {
@@ -137,22 +139,19 @@ struct LanguageSelectorView: View {
                     } catch {
                         Logger.shared.log("Language not supported: \(language)")
                     }
-                    
                 }
             }
         } label: {
             HStack {
                 Text(self.selectedLanguage)
+                    .foregroundColor(isHovering ? (colorScheme == .dark ? Color.white : Color.black) : Color.gray)
             }
-            .padding()
             .cornerRadius(8)
         }
         .buttonStyle(PlainButtonStyle())
-        // .frame(minWidth: 50, idealWidth: 80, maxWidth: .infinity)
-        .padding([.top, .bottom, .trailing], 0)
-        .foregroundColor(.primary)
         .menuStyle(.borderlessButton)
         .fixedSize()
+        .onHover { hovering in isHovering = hovering }
     }
 }
 

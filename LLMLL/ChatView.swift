@@ -340,15 +340,14 @@ struct ChatView: View {
                     }
                 }
                 .frame(width: 200)
-                
-                SlowModeButtonView(viewModel: self.viewModel)
-                    .keyboardShortcut("s", modifiers: .command)
             }
-            .overlay(
-                LanguageSelectorView(viewModel: self.viewModel),
-                alignment: .topTrailing)
-            
-            DividerLine(width: 1)
+            .toolbar {
+                ToolbarItem(placement: .navigation) { LanguageSelectorView(viewModel: self.viewModel) }
+                ToolbarItem(placement: .navigation) {
+                    SlowModeButtonView(viewModel: self.viewModel)
+                        .keyboardShortcut("s", modifiers: .command)
+                }
+            }
             
             VStack {
                 if let activeConversation = self.viewModel.conversations[self.viewModel.activeConversationId] {
@@ -364,8 +363,6 @@ struct ChatView: View {
                 } else {
                     Text("Error: No active conversation")
                 }
-                
-                DividerLine(height: 1)
                 
                 HStack {
                     CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize) {
