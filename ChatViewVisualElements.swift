@@ -122,6 +122,40 @@ struct SlowModeButtonView: View {
     }
 }
 
+
+struct LanguageSelectorView: View {
+    @State private var selectedLanguage = "English"
+    @ObservedObject var viewModel: ChatViewModel
+
+    var body: some View {
+        Menu {
+            ForEach(languageOptions, id: \.self) { language in
+                Button(language) {
+                    do {
+                        try self.viewModel.setLanguage(language)
+                        self.selectedLanguage = language
+                    } catch {
+                        Logger.shared.log("Language not supported: \(language)")
+                    }
+                    
+                }
+            }
+        } label: {
+            HStack {
+                Text(self.selectedLanguage)
+            }
+            .padding()
+            .cornerRadius(8)
+        }
+        .buttonStyle(PlainButtonStyle())
+        // .frame(minWidth: 50, idealWidth: 80, maxWidth: .infinity)
+        .padding([.top, .bottom, .trailing], 0)
+        .foregroundColor(.primary)
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+    }
+}
+
 struct NewConversationButtonView: View {
     let action: () -> Void
     @State private var isHovering = false

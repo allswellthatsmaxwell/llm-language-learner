@@ -85,17 +85,17 @@ func generateUniqueFilename() -> String {
 }
 
 
-    
-func generateTitle(messages: [ChatMessage], completion: @escaping (String) -> Void) {
-    let TitlerChatAPI = TitlerChatAPI()
-    let openAIMessages = messages.map { $0.openAIMessage }
-    TitlerChatAPI.sendMessages(messages: openAIMessages) { result in
-        if let result = result {
-            Logger.shared.log("generateTitle: \(result.content)")
-            completion(result.content)
-        } else {
-            Logger.shared.log("Titler: No message received, or an error occurred")
-            completion("New chat")
-        }
-    }
-}
+//    
+//func generateTitle(messages: [ChatMessage], completion: @escaping (String) -> Void) {
+//    let TitlerChatAPI = TitlerChatAPI()
+//    let openAIMessages = messages.map { $0.openAIMessage }
+//    TitlerChatAPI.sendMessages(messages: openAIMessages) { result in
+//        if let result = result {
+//            Logger.shared.log("generateTitle: \(result.content)")
+//            completion(result.content)
+//        } else {
+//            Logger.shared.log("Titler: No message received, or an error occurred")
+//            completion("New chat")
+//        }
+//    }
+//}

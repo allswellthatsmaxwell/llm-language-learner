@@ -105,6 +105,12 @@ class ChatAPI: OpenAIAPI {
         self.languageSpecificRules = languageSpecificRulesDict[language] ?? ""
     }
     
+    func setLanguage(_ language: String) {
+        self.language = language
+        self.writingSystem = languageWritingSystems[language] ?? "the language's characters"
+        self.languageSpecificRules = languageSpecificRulesDict[language] ?? ""    
+    }
+    
     func getChatCompletionResponse(messages: [OpenAIMessage], completion: @escaping (Result<Data, Error>) -> Void) {
         guard var request = constructRequest(url: url) else { return }
         

@@ -21,23 +21,29 @@ struct ChatResult: Codable {
     let comments: String
 }
 
+enum LanguageError: Error {
+    case unsupportedLanguage
+}
 
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     @Published var conversations: [UUID:ChatConversation] = ChatConversation.loadAll()
     @Published var conversationOrder: [UUID] = []
+    @State var selectedLanguage = "Korean"
     
     @Published var activeConversationId: UUID
     @Published var titleStore = TitleStore()
+
     
     @Published var audioRecorder = AudioRecorder()
     private var audioPlayer = AudioPlayerManager()
-    
-    private var advisorChatAPI = AdvisorChatAPI()
+        
     private let transcriptionAPI = TranscriptionAPI()
     private let textToSpeechAPI = TextToSpeechAPI()
-    private let extractorChatAPI = ExtractorChatAPI()
-    private var titlerChatAPI = TitlerChatAPI()
+    
+    private var advisorChatAPI = AdvisorChatAPI(language: "Korean")
+    private var extractorChatAPI = ExtractorChatAPI(language: "Korean")
+    private var titlerChatAPI = TitlerChatAPI(language: "Korean")
     
     @Published var isLoading: Bool = false
     @Published var slowMode: Bool = false
@@ -67,6 +73,17 @@ class ChatViewModel: ObservableObject {
                     generateSingleTitle(conversation: conversation)
                 }
             }
+        }
+    }
+    
+    func setLanguage(_ language: String) throws {
+        if let _ = languageWritingSystems[language] {
+            self.selectedLanguage = language
+            self.advisorChatAPI = AdvisorChatAPI(language: language)
+            self.extractorChatAPI = ExtractorChatAPI(language: language)
+            self.titlerChatAPI = TitlerChatAPI(language: language)
+        } else {
+            throw LanguageError.unsupportedLanguage
         }
     }
     
@@ -327,6 +344,9 @@ struct ChatView: View {
                 SlowModeButtonView(viewModel: self.viewModel)
                     .keyboardShortcut("s", modifiers: .command)
             }
+            .overlay(
+                LanguageSelectorView(viewModel: self.viewModel),
+                alignment: .topTrailing)
             
             DividerLine(width: 1)
             

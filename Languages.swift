@@ -67,9 +67,12 @@ let languageWritingSystems: [String: String] = [
     "Welsh": "Welsh alphabet"
 ]
 
+let languageOptions: [String] = Array(languageWritingSystems.keys)
+
 let languageSpecificRulesDict: [String: String] = [
     "Korean": """
 * Use only the 요, not the formal 니다 form, unless the user themselves included a formal 니다 form in their transcription.
 * Not using the polite form, with 요 in the right places, counts as a mistake you should correct.
 """
 ]
+
