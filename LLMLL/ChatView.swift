@@ -360,11 +360,6 @@ struct ChatView: View {
                     SlowModeButtonView(viewModel: self.viewModel)
                         .keyboardShortcut("s", modifiers: .command)
                 }
-                if self.viewModel.isOffline {
-                    ToolbarItem(placement: .navigation) {
-                        OfflineIndicatorView()
-                    }
-                }
             }
             
             VStack {
@@ -383,10 +378,18 @@ struct ChatView: View {
                 }
                 
                 HStack {
-                    CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize) {
-                        viewModel.sendMessageWithStreamedResponse()
+                    VStack {
+                        if self.viewModel.isOffline {
+                            OfflineIndicatorView()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                // .padding(.horizontal)
+                                .multilineTextAlignment(.leading)
+
+                        }
+                        CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize) {
+                            viewModel.sendMessageWithStreamedResponse()
+                        }
                     }
-                    
                     AudioCircleIconButton(
                         audioRecorder: self.viewModel.audioRecorder,
                         action: {

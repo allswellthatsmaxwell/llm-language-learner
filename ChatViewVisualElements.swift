@@ -178,10 +178,10 @@ struct NewConversationButtonView: View {
 
 struct OfflineIndicatorView: View {
     var body: some View {
-        Text("There was a network issue. Please confirm you are connected to the internet.")
+        Text("Network error?! Please confirm you are connected to the internet.")
             .font(.system(size: 10))
             .foregroundColor(.red)
-            .frame(width: 100, height: 80, alignment: .center)
+            // .frame(width: 100, height: 80, alignment: .center)
     }
 }
 
