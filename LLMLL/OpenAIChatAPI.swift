@@ -133,7 +133,7 @@ class ChatAPI: OpenAIAPI {
     }
         
     
-    func sendMessages(messages: [OpenAIMessage], completion: @escaping (OpenAIMessage?) -> Void) {
+    func sendMessages(messages: [OpenAIMessage], completion: @escaping (Result<OpenAIMessage, Error>) -> Void) {
         self.getChatCompletionResponse(messages: messages) { result in
             switch result {
             case .success(let data):
@@ -141,7 +141,7 @@ class ChatAPI: OpenAIAPI {
                     Logger.shared.log("sendMessages: Received response: \(String(data: data, encoding: .utf8) ?? "No data")")
                     let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
                     if let firstMessage = response.choices.first?.message {
-                        return completion(firstMessage)
+                        return completion(.success(firstMessage))
                     } else {
                         Logger.shared.log("No messages found in response")
                     }
@@ -157,15 +157,12 @@ class ChatAPI: OpenAIAPI {
                         }
                     }
                 }
-            case .failure(let error): Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
+            case .failure(let error): 
+                completion(isNetworkError(error) ? .failure(ConnectionError.offline) : .failure(error))
+                Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
             }
         }
     }
-}
-
-enum ConnectionError: Error {
-    case offline
-    case connectionLost
 }
 
 class ChatStreamingAPI: ChatAPI {
@@ -194,9 +191,7 @@ class ChatStreamingAPI: ChatAPI {
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 Logger.shared.log("ChatStreamingAPI.getChatCompletionResponse: Error in shared.dataTask: \(error.localizedDescription)")
-                let errstr = "\(error)"
-                let networkIssue = errstr.contains("offline") || (errstr.contains("connection") && errstr.contains("lost"))
-                if networkIssue {
+                if isNetworkError(error) {
                     chunkCompletion(.failure(ConnectionError.offline))
                 }
             }

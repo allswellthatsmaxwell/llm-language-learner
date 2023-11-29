@@ -130,17 +130,16 @@ class ChatViewModel: ObservableObject {
         } else {
             // otherwise, generate it
             self.titlerChatAPI.sendMessages(messages: conversation.messages.map( { $0.openAIMessage })) { createdTitle in
-                DispatchQueue.main.async {
-                    if let resultMessage = createdTitle {
+                switch createdTitle {
+                case .success(let resultMessage):
+                    DispatchQueue.main.async {
                         self.titleStore.addTitle(chatId: conversation.id, title: resultMessage.content)
-                                                
                         let title = resultMessage.content.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                        let titleWithFlag = "\(self.flagEmoji) \(title)"
-                        completion(titleWithFlag)
-                    } else {
-                        Logger.shared.log("No title received, or an error occurred")
-                        completion(defaultChatTitle)
+                        completion("\(self.flagEmoji) \(title)")
                     }
+                case .failure:
+                    Logger.shared.log("No title received, or an error occurred")
+                    completion(defaultChatTitle) // pretend it's a success, with the defaultChatTitle as the attained title
                 }
             }
         }
@@ -154,28 +153,41 @@ class ChatViewModel: ObservableObject {
     func processAndSynthesizeAudio(_ message: ChatMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
         toggleLoadingState() // turn on
         Logger.shared.log("processAndSynthesizeAudio: received message parameter '\(message.openAIMessage.content)'")
-        self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { firstMessage in
+        self.extractorChatAPI.sendMessages(messages: [message.openAIMessage]) { [weak self] firstMessage in
             // TODO: When sendMessages fails to return, that failure doesn't make it back here, so we never execute any
             // of the code in this block. So the loading-spinny on the "speak this text" button spins forever.
             // We need to propogate that error up here, and toggle the loading state in that case too.
-            guard let extractedMessage = firstMessage else {
-                toggleLoadingState() // turn off
-                Logger.shared.log("extractor/speaker: No message received, or an error occurred")
-                return
+            DispatchQueue.main.async {
+                switch firstMessage {
+                case .success(let extractedMessage):
+                    self?.isOffline = false
+                    Logger.shared.log("processAndSynthesizeAudio: Extractor returned: \(extractedMessage.content)")
+                    self?.speakText(extractedMessage, audioFilePath: audioFilePath, toggleLoadingState: toggleLoadingState)
+                case .failure(let error):
+                    Logger.shared.log("speaking extracted text: \(error.localizedDescription)")
+                    if case ConnectionError.offline = error { self?.isOffline = true }
+                    toggleLoadingState() // turn off
+                }
             }
-            Logger.shared.log("processAndSynthesizeAudio: Extractor returned: \(extractedMessage.content)")
-            self.textToSpeechAPI.synthesizeSpeech(from: extractedMessage.content) { result in
+        }
+    }
+    
+    private func speakText(_ extractedMessage: OpenAIMessage, audioFilePath: URL, toggleLoadingState: @escaping () -> Void) {
+        self.textToSpeechAPI.synthesizeSpeech(from: extractedMessage.content) { [weak self] result in
+            DispatchQueue.main.async {
                 switch result {
                 case .success(let audioData):
+                    self?.isOffline = false
                     do {
                         try audioData.write(to: audioFilePath)
                         Logger.shared.log("Saved audio file to: \(audioFilePath)")
-                        try self.audioPlayer.playAudio(audioPathURL: audioFilePath)
+                        try self?.audioPlayer.playAudio(audioPathURL: audioFilePath)
                     } catch {
                         Logger.shared.log("Error saving or playing audio file: \(error)")
                     }
                     toggleLoadingState() // turn off
                 case .failure(let error):
+                    if case ConnectionError.offline = error { self?.isOffline = true }
                     Logger.shared.log("Failed to synthesize speech: \(error)")
                     toggleLoadingState() // turn off
                 }
@@ -200,21 +212,25 @@ class ChatViewModel: ObservableObject {
     
     private func transcribeAudio(fileURL: URL) {
         transcriptionAPI.transcribe(fileURL: fileURL) { [weak self] result in
-            switch result {
-            case .success(let transcriptData):
-                do {
-                    let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)
-                    DispatchQueue.main.async {
-                        
-                        self?.inputText += transcriptionResult.text
-                        Logger.shared.log("inputText set to transcript: " + transcriptionResult.text)
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let transcriptData):
+                    self?.isOffline = false
+                    do {
+                        let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)
+                        DispatchQueue.main.async {
+                            self?.inputText += transcriptionResult.text
+                            Logger.shared.log("inputText set to transcript: " + transcriptionResult.text)
+                        }
+                        Logger.shared.log("Transcription Received")
+                    } catch {
+                        Logger.shared.log("Failed to decode transcription result: \(error.localizedDescription)")
                     }
-                    Logger.shared.log("Transcription Received")
-                } catch {
-                    Logger.shared.log("Failed to decode transcription result: \(error.localizedDescription)")
+                case .failure(let error):
+                    Logger.shared.log("\(#function): failure case.")
+                    if case ConnectionError.offline = error { self?.isOffline = true }
+                    Logger.shared.log("Error: \(error.localizedDescription)")
                 }
-            case .failure(let error):
-                Logger.shared.log("Error: \(error.localizedDescription)")
             }
         }
     }

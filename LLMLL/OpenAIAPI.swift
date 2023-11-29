@@ -17,6 +17,17 @@ private func readApiKey() -> String? {
 }
 
 
+enum ConnectionError: Error {
+    case offline
+    case connectionLost
+}
+
+func isNetworkError(_ err: Error) -> Bool {
+    let errstr = "\(err)"
+    return errstr.contains("offline") || (errstr.contains("connection") && errstr.contains("lost"))
+}
+
+
 class OpenAIAPI {
     private let apiKey: String
     private let session = URLSession.shared
@@ -53,7 +64,7 @@ class OpenAIAPI {
     func submitRequest(request: URLRequest, completion: @escaping (Result<Data, Error>) -> Void) {
         self.session.dataTask(with: request) { data, response, error in
             if let error = error {
-                completion(.failure(error))
+                completion(isNetworkError(error) ? .failure(ConnectionError.offline) : .failure(error))
                 return
             }
             
