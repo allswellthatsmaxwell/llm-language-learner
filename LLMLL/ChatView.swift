@@ -21,10 +21,6 @@ struct ChatResult: Codable {
     let comments: String
 }
 
-enum LanguageError: Error {
-    case unsupportedLanguage
-}
-
 class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     @Published var conversations: [UUID:ChatConversation] = ChatConversation.loadAll()
@@ -49,6 +45,7 @@ class ChatViewModel: ObservableObject {
     
     @Published var isLoading: Bool = false
     @Published var slowMode: Bool = false
+    @Published var isOffline = false
     
     init() {
         let activeConversation = ChatConversation(messages: [])
@@ -265,7 +262,6 @@ class ChatViewModel: ObservableObject {
         let targetConversationId = self.activeConversationId
 
         if var targetConversation = self.conversations[targetConversationId] {
-            DispatchQueue.main.async { self.inputText = "" }
             targetConversation.append(userMessage)
             self.conversations[targetConversationId] = targetConversation
             
@@ -274,6 +270,8 @@ class ChatViewModel: ObservableObject {
     }
     
     private func receiveStreamedResponse(_ targetConversation: inout ChatConversation, _ targetConversationId: UUID) {
+        let originalInputText = self.inputText
+        DispatchQueue.main.async { self.inputText = "" }
         
         let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
         Logger.shared.log("Sending messages: \(openAIMessages)")
@@ -291,6 +289,7 @@ class ChatViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let chatMessage):
+                        self.isOffline = false
                         let targetConversationId = self.activeConversationId
                         if var targetConversation = self.conversations[targetConversationId] {
                             self.updateResponseText(chatMessage, &targetConversation, targetConversationId)
@@ -298,6 +297,12 @@ class ChatViewModel: ObservableObject {
                             // Logger.shared.log("Conversation updated!")
                     case .failure(let error):
                         Logger.shared.log("Streaming error: \(error.localizedDescription)")
+                        if case ConnectionError.offline = error {
+                            self.isOffline = true
+                            self.conversations[self.activeConversationId]?.removeLastAIMessage()
+                            self.conversations[self.activeConversationId]?.removeLastUserMessage()
+                            self.inputText = originalInputText
+                        }
                     }
                     dispatchGroup.leave()
                 }
@@ -354,6 +359,11 @@ struct ChatView: View {
                 ToolbarItem(placement: .navigation) {
                     SlowModeButtonView(viewModel: self.viewModel)
                         .keyboardShortcut("s", modifiers: .command)
+                }
+                if self.viewModel.isOffline {
+                    ToolbarItem(placement: .navigation) {
+                        OfflineIndicatorView()
+                    }
                 }
             }
             

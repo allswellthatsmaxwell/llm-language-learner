@@ -51,6 +51,20 @@ struct ChatConversation: Codable, Identifiable {
         }
     }
     
+    mutating func removeLastUserMessage() {
+        if let isUser = self.messages.last?.isUser,
+           isUser {
+            _ = self.messages.popLast()
+        }
+    }
+    
+    mutating func removeLastAIMessage() {
+        if let isUser = self.messages.last?.isUser,
+           !isUser {
+            _ = self.messages.popLast()
+        }
+    }
+    
     static func loadAll() -> [UUID:ChatConversation] {
         let fileManager = FileManager.default
         let fileURLs = try! fileManager.contentsOfDirectory(at: fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0],

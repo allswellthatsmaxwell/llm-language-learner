@@ -136,3 +136,6 @@ let languageSpecificRulesDict: [String: String] = [
 """
 ]
 
+enum LanguageError: Error {
+    case unsupportedLanguage
+}

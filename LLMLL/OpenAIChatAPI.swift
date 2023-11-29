@@ -163,6 +163,11 @@ class ChatAPI: OpenAIAPI {
     }
 }
 
+enum ConnectionError: Error {
+    case offline
+    case connectionLost
+}
+
 class ChatStreamingAPI: ChatAPI {
     func getChatCompletionResponse(messages: [OpenAIMessage], 
                                    chunkCompletion: @escaping (Result<ChatMessage, Error>) -> Void,
@@ -189,7 +194,11 @@ class ChatStreamingAPI: ChatAPI {
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 Logger.shared.log("ChatStreamingAPI.getChatCompletionResponse: Error in shared.dataTask: \(error.localizedDescription)")
-                return
+                let errstr = "\(error)"
+                let networkIssue = errstr.contains("offline") || (errstr.contains("connection") && errstr.contains("lost"))
+                if networkIssue {
+                    chunkCompletion(.failure(ConnectionError.offline))
+                }
             }
             
             guard let data = data else {

@@ -176,6 +176,15 @@ struct NewConversationButtonView: View {
     }
 }
 
+struct OfflineIndicatorView: View {
+    var body: some View {
+        Text("There was a network issue. Please confirm you are connected to the internet.")
+            .font(.system(size: 10))
+            .foregroundColor(.red)
+            .frame(width: 100, height: 80, alignment: .center)
+    }
+}
+
 struct MessageBubble: View {
     let message: ChatMessage
     let action: ( @escaping () -> Void ) -> Void
@@ -206,11 +215,15 @@ struct MessageBubble: View {
             if self.message.isUser { Spacer() } // Right-align user messages
             
             if self.message.content.isEmpty {
-                ProgressView()
-                    .frame(width: 30, height: 30)
-                    .padding()
-                    .background(self.getBackgroundColor())
-                    .cornerRadius(10)
+                if self.viewModel.isOffline {
+                    Text("")
+                } else {
+                    ProgressView()
+                        .frame(width: 30, height: 30)
+                        .padding()
+                        .background(self.getBackgroundColor())
+                        .cornerRadius(10)
+                }
             } else {
                 Text(self.message.content)
                     .padding()
