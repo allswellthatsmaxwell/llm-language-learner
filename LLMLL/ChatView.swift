@@ -249,13 +249,16 @@ class ChatViewModel: ObservableObject {
             
             let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
             Logger.shared.log("Sending messages: \(openAIMessages)")
+            let emptyMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
+            targetConversation.append(emptyMessage)
             self.advisorChatAPI.sendMessages(messages: openAIMessages) { result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let message):
                         Logger.shared.log("Received message: \(message.content)")
-                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
-                        targetConversation.append(aiChatMessage)
+//                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
+//                        targetConversation.append(aiChatMessage)
+                        self.updateResponseText(message, &targetConversation, targetConversationId)
                         self.conversations[targetConversationId] = targetConversation
                         targetConversation.save()
                         
