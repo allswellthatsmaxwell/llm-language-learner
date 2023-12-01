@@ -61,7 +61,7 @@ class OpenAIAPI {
         return request
     }
     
-    func submitRequest(request: URLRequest, completion: @escaping (Result<Data, Error>) -> Void) {
+    func submitRequest(request: URLRequest, completion: @escaping (Result<Data, Error>) -> Void) {        
         self.session.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(isNetworkError(error) ? .failure(ConnectionError.offline) : .failure(error))
@@ -106,6 +106,7 @@ class TextToSpeechAPI: OpenAIAPI {
 class TranscriptionAPI: OpenAIAPI {
     override var url: String {
         return "https://api.openai.com/v1/audio/transcriptions"
+        // return "http://127.0.0.1:5000/transcribe"
     }
     private let boundary = "Boundary-\(UUID().uuidString)"
     

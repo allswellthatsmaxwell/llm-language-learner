@@ -116,8 +116,8 @@ class ChatViewModel: ObservableObject {
     
     
     func generateSingleTitle(conversation: ChatConversation) {
-        generateTitle(conversation: conversation) { newTitle in
-            DispatchQueue.main.async {
+        DispatchQueue.main.async {
+            self.generateTitle(conversation: conversation) { newTitle in
                 self.titleStore.addTitle(chatId: conversation.id, title: newTitle)
             }
         }
@@ -125,21 +125,21 @@ class ChatViewModel: ObservableObject {
     
     func generateTitle(conversation: ChatConversation, completion: @escaping (String) -> Void) {
         // use title if it exists
-        if let title = self.titleStore.titles[conversation.id] {
-            completion(title)
-        } else {
-            // otherwise, generate it
-            self.titlerChatAPI.sendMessages(messages: conversation.messages.map( { $0.openAIMessage })) { createdTitle in
-                switch createdTitle {
-                case .success(let resultMessage):
-                    DispatchQueue.main.async {
-                        self.titleStore.addTitle(chatId: conversation.id, title: resultMessage.content)
+        DispatchQueue.main.async {
+            if let title = self.titleStore.titles[conversation.id] {
+                completion(title)
+            } else {
+                // otherwise, generate it
+                self.titlerChatAPI.sendMessages(messages: conversation.messages.map( { $0.openAIMessage })) { createdTitle in
+                    switch createdTitle {
+                    case .success(let resultMessage):
                         let title = resultMessage.content.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
                         completion("\(self.flagEmoji) \(title)")
+                        
+                    case .failure:
+                        Logger.shared.log("No title received, or an error occurred")
+                        completion(defaultChatTitle) // pretend it's a success, with the defaultChatTitle as the attained title
                     }
-                case .failure:
-                    Logger.shared.log("No title received, or an error occurred")
-                    completion(defaultChatTitle) // pretend it's a success, with the defaultChatTitle as the attained title
                 }
             }
         }
@@ -235,111 +235,114 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-//    func sendMessage() {
-//        guard !self.inputText.isEmpty else { return }
-//        
-//        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
-//        let targetConversationId = self.activeConversationId
-//        
-//        if var targetConversation = self.conversations[targetConversationId] {
-//            DispatchQueue.main.async { self.inputText = "" }
-//            targetConversation.append(userMessage)
-//            self.conversations[targetConversationId] = targetConversation
-//            
-//            let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
-//            Logger.shared.log("Sending messages: \(openAIMessages)")
-//            self.advisorChatAPI.sendMessages(messages: openAIMessages) { firstMessage in
-//                DispatchQueue.main.async {
-//                    if let message = firstMessage {
-//                        Logger.shared.log("Received message: \(message.content)")
-//                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
-//                        targetConversation.append(aiChatMessage)
-//                        self.conversations[targetConversationId] = targetConversation
-//                        targetConversation.save()
-//                        
-//                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
-//                            self.generateSingleTitle(conversation: targetConversation)
-//                        }
-//                        self.conversations[targetConversationId] = targetConversation
-//                    } else {
-//                        Logger.shared.log("No message received, or an error occurred")
-//                    }
-//                }
-//            }
-//        } else {
-//            Logger.shared.log("Error in sendMessage: targetConversation is nil")
-//        }
-//    }
-    
-    func sendMessageWithStreamedResponse() {
+    func sendMessage() {
         guard !self.inputText.isEmpty else { return }
         
         let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
         let targetConversationId = self.activeConversationId
-
+        
         if var targetConversation = self.conversations[targetConversationId] {
+            let originalInputText = self.inputText
+            DispatchQueue.main.async { self.inputText = "" }
             targetConversation.append(userMessage)
             self.conversations[targetConversationId] = targetConversation
             
-            receiveStreamedResponse(&targetConversation, targetConversationId)
+            let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
+            Logger.shared.log("Sending messages: \(openAIMessages)")
+            self.advisorChatAPI.sendMessages(messages: openAIMessages) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let message):
+                        Logger.shared.log("Received message: \(message.content)")
+                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
+                        targetConversation.append(aiChatMessage)
+                        self.conversations[targetConversationId] = targetConversation
+                        targetConversation.save()
+                        
+                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
+                            self.generateSingleTitle(conversation: targetConversation)
+                        }
+                        self.conversations[targetConversationId] = targetConversation
+                    case .failure(let error):
+                        self.inputText = originalInputText
+                        Logger.shared.log("Error sending message: \(error.localizedDescription)")
+                    }
+                }
+            }
+        } else {
+            Logger.shared.log("Error in sendMessage: targetConversation is nil")
         }
     }
     
-    private func receiveStreamedResponse(_ targetConversation: inout ChatConversation, _ targetConversationId: UUID) {
-        let originalInputText = self.inputText
-        DispatchQueue.main.async { self.inputText = "" }
-        
-        let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
-        Logger.shared.log("Sending messages: \(openAIMessages)")
-        
-        let dispatchGroup = DispatchGroup()
-
-        let emptyMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
-        targetConversation.append(emptyMessage)
-        self.conversations[targetConversationId] = targetConversation
-        self.advisorChatAPI.getChatCompletionResponse(
-            messages: openAIMessages,
-            chunkCompletion: { result in
-                Logger.shared.log("Received result: \(result)")
-                dispatchGroup.enter()
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success(let chatMessage):
-                        self.isOffline = false
-                        let targetConversationId = self.activeConversationId
-                        if var targetConversation = self.conversations[targetConversationId] {
-                            self.updateResponseText(chatMessage, &targetConversation, targetConversationId)
-                        }
-                            // Logger.shared.log("Conversation updated!")
-                    case .failure(let error):
-                        Logger.shared.log("Streaming error: \(error.localizedDescription)")
-                        if case ConnectionError.offline = error {
-                            self.isOffline = true
-                            self.conversations[self.activeConversationId]?.removeLastAIMessage()
-                            self.conversations[self.activeConversationId]?.removeLastUserMessage()
-                            self.inputText = originalInputText
-                        }
-                    }
-                    dispatchGroup.leave()
-                }
-            },
-            streamCompletion: {
-                dispatchGroup.notify(queue: DispatchQueue.main) {
-                    if let targetConversation = self.conversations[targetConversationId] {
-                        if targetConversation.messages.count >= 2 {
-                            Logger.shared.log("Saving conversation.")
-                            DispatchQueue.main.async { targetConversation.save() }
-                        }
-                        Logger.shared.log("Title: \(targetConversation.title)")
-                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
-                            Logger.shared.log("Generating title")
-                            DispatchQueue.main.async { self.generateSingleTitle(conversation: targetConversation) }
-                            
-                        }
-                    }
-                }
-            })
-    }
+//    func sendMessageWithStreamedResponse() {
+//        guard !self.inputText.isEmpty else { return }
+//        
+//        let userMessage = ChatMessage(msg: OpenAIMessage(userContent: self.inputText))
+//        let targetConversationId = self.activeConversationId
+//
+//        if var targetConversation = self.conversations[targetConversationId] {
+//            targetConversation.append(userMessage)
+//            self.conversations[targetConversationId] = targetConversation
+//            
+//            receiveStreamedResponse(&targetConversation, targetConversationId)
+//        }
+//    }
+    
+//    private func receiveStreamedResponse(_ targetConversation: inout ChatConversation, _ targetConversationId: UUID) {
+//        let originalInputText = self.inputText
+//        DispatchQueue.main.async { self.inputText = "" }
+//        
+//        let openAIMessages = targetConversation.messages.map { $0.openAIMessage }
+//        Logger.shared.log("Sending messages: \(openAIMessages)")
+//        
+//        let dispatchGroup = DispatchGroup()
+//
+//        let emptyMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
+//        targetConversation.append(emptyMessage)
+//        self.conversations[targetConversationId] = targetConversation
+//        self.advisorChatAPI.getChatCompletionResponse(
+//            messages: openAIMessages,
+//            chunkCompletion: { result in
+//                Logger.shared.log("Received result: \(result)")
+//                dispatchGroup.enter()
+//                DispatchQueue.main.async {
+//                    switch result {
+//                    case .success(let chatMessage):
+//                        self.isOffline = false
+//                        let targetConversationId = self.activeConversationId
+//                        if var targetConversation = self.conversations[targetConversationId] {
+//                            self.updateResponseText(chatMessage, &targetConversation, targetConversationId)
+//                        }
+//                            // Logger.shared.log("Conversation updated!")
+//                    case .failure(let error):
+//                        Logger.shared.log("Streaming error: \(error.localizedDescription)")
+//                        if case ConnectionError.offline = error {
+//                            self.isOffline = true
+//                            self.conversations[self.activeConversationId]?.removeLastAIMessage()
+//                            self.conversations[self.activeConversationId]?.removeLastUserMessage()
+//                            self.inputText = originalInputText
+//                        }
+//                    }
+//                    dispatchGroup.leave()
+//                }
+//            },
+//            streamCompletion: {
+//                dispatchGroup.notify(queue: DispatchQueue.main) {
+//                    if let targetConversation = self.conversations[targetConversationId] {
+//                        if targetConversation.messages.count >= 2 {
+//                            Logger.shared.log("Saving conversation.")
+//                            DispatchQueue.main.async { targetConversation.save() }
+//                        }
+//                        Logger.shared.log("Title: \(targetConversation.title)")
+//                        if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
+//                            Logger.shared.log("Generating title")
+//                            DispatchQueue.main.async { self.generateSingleTitle(conversation: targetConversation) }
+//                            
+//                        }
+//                    }
+//                }
+//            })
+//    }
     
     
     func updateResponseText(_ chatMessage: ChatMessage, _ targetConversation: inout ChatConversation, _ targetConversationId: UUID) {
@@ -403,7 +406,8 @@ struct ChatView: View {
 
                         }
                         CustomTextEditor(text: $viewModel.inputText, placeholder: "", fontSize: fontSize) {
-                            viewModel.sendMessageWithStreamedResponse()
+                            // viewModel.sendMessageWithStreamedResponse()
+                            viewModel.sendMessage()
                         }
                     }
                     AudioCircleIconButton(
@@ -414,7 +418,7 @@ struct ChatView: View {
                         size: entryButtonSize)
                     .keyboardShortcut("m", modifiers: .command)
                     
-                    CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessageWithStreamedResponse, size: entryButtonSize)
+                    CircleIconButton(iconName: "paperplane.circle.fill", action: self.viewModel.sendMessage, size: entryButtonSize)
                         .keyboardShortcut(.return, modifiers: .command)
                 }
             }

@@ -96,7 +96,8 @@ class ChatAPI: OpenAIAPI {
     }
     
     override var url: String {
-        return "https://api.openai.com/v1/chat/completions"
+        // return "https://api.openai.com/v1/chat/completions"
+        return "http://127.0.0.1:5000/chat"
     }
     
     init (language: String) {
@@ -272,7 +273,7 @@ class ChatStreamingAPI: ChatAPI {
 }
     
 
-class AdvisorChatAPI: ChatStreamingAPI {
+class AdvisorChatAPI: ChatAPI {
     override var systemPrompt: String {
         return """
 You are to act as a teacher for \(self.language) language and grammar, for a student who speaks English as their first language.
