@@ -20,6 +20,7 @@ private func readApiKey() -> String? {
 enum ConnectionError: Error {
     case offline
     case connectionLost
+    case badDataFromServer
 }
 
 func isNetworkError(_ err: Error) -> Bool {

@@ -27,6 +27,20 @@ extension ChatAPIError: LocalizedError {
     }
 }
 
+private func logSpecificDecodingError(_ error: Error) {
+    Logger.shared.log("Failed to decode response: \(error.localizedDescription)")
+    if let error = error as? DecodingError {
+        switch error {
+        case .dataCorrupted(let context), .keyNotFound(_, let context),
+                .typeMismatch(_, let context), .valueNotFound(_, let context):
+            Logger.shared.log("Decoding error: \(context.debugDescription)")
+        @unknown default:
+            Logger.shared.log("Unknown decoding error")
+        }
+    }
+}
+    
+
 class OpenAIMessage: Codable {
     var role: String
     var content: String
@@ -141,26 +155,18 @@ class ChatAPI: OpenAIAPI {
                 do {
                     Logger.shared.log("sendMessages: Received response: \(String(data: data, encoding: .utf8) ?? "No data")")
                     let response = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-                    if let firstMessage = response.choices.first?.message {
-                        return completion(.success(firstMessage))
-                    } else {
-                        Logger.shared.log("No messages found in response")
+                    Logger.shared.log("sendMessages: Decoded response: \(response)")
+                    guard let firstMessage = response.choices.first?.message else {
+                        throw ChatAPIError.missingData
                     }
+                    return completion(.success(firstMessage))
                 } catch {
-                    Logger.shared.log("Failed to decode response: \(error.localizedDescription)")
-                    if let error = error as? DecodingError {
-                        switch error {
-                        case .dataCorrupted(let context), .keyNotFound(_, let context),
-                                .typeMismatch(_, let context), .valueNotFound(_, let context):
-                            Logger.shared.log("Decoding error: \(context.debugDescription)")
-                        @unknown default:
-                            Logger.shared.log("Unknown decoding error")
-                        }
-                    }
+                    logSpecificDecodingError(error)
+                    completion(.failure(ChatAPIError.missingData))
                 }
-            case .failure(let error): 
-                completion(isNetworkError(error) ? .failure(ConnectionError.offline) : .failure(error))
+            case .failure(let error):
                 Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
+                completion(isNetworkError(error) ? .failure(ConnectionError.offline) : .failure(error))
             }
         }
     }
@@ -214,7 +220,6 @@ class ChatStreamingAPI: ChatAPI {
                                      chunkCompletion: @escaping (Result<ChatMessage, Error>) -> Void,
                                      streamCompletion: @escaping () -> Void) {
         Logger.shared.log("processStreamedData")
-        // Assuming the data is UTF8 encoded
         guard let string = String(data: data, encoding: .utf8) else {
             Logger.shared.log("processStreamedData: failed to convert data to string")
             return

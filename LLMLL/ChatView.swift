@@ -251,14 +251,14 @@ class ChatViewModel: ObservableObject {
             Logger.shared.log("Sending messages: \(openAIMessages)")
             let emptyMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
             targetConversation.append(emptyMessage)
+            self.conversations[targetConversationId] = targetConversation
             self.advisorChatAPI.sendMessages(messages: openAIMessages) { result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let message):
+                        self.isOffline = false
                         Logger.shared.log("Received message: \(message.content)")
-//                        let aiChatMessage = ChatMessage(msg: OpenAIMessage(AIContent: message.content))
-//                        targetConversation.append(aiChatMessage)
-                        self.updateResponseText(message, &targetConversation, targetConversationId)
+                        self.updateResponseText(ChatMessage(msg: message), &targetConversation, targetConversationId)
                         self.conversations[targetConversationId] = targetConversation
                         targetConversation.save()
                         
@@ -267,8 +267,13 @@ class ChatViewModel: ObservableObject {
                         }
                         self.conversations[targetConversationId] = targetConversation
                     case .failure(let error):
+                        Logger.shared.log("\(#function): \(error.localizedDescription)")
                         self.inputText = originalInputText
-                        Logger.shared.log("Error sending message: \(error.localizedDescription)")
+                        self.conversations[self.activeConversationId]?.removeLastAIMessage()
+                        self.conversations[self.activeConversationId]?.removeLastUserMessage()
+                        if case ConnectionError.offline = error {
+                            self.isOffline = true
+                        }
                     }
                 }
             }
