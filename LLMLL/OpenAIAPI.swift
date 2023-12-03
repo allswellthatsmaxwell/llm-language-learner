@@ -84,24 +84,27 @@ class OpenAIAPI {
 
 class TextToSpeechAPI: OpenAIAPI {
     override var url: String {
-        return "https://api.openai.com/v1/audio/speech"
+        // return "https://api.openai.com/v1/audio/speech"
+        return "http://127.0.0.1:5000/synthesize_speech"
     }
     
-    func synthesizeSpeech(from text: String, completion: @escaping (Result<Data, Error>) -> Void) {
+    func synthesizeSpeech(from text: String, voice: String = "onyx", completion: @escaping (Result<Data, Error>) -> Void) {
         guard var request = self.constructRequest(url: url) else { return }
-        
-        do {
-            request.httpBody = try JSONSerialization.data(
-                withJSONObject: [
-                    "model": "tts-1",
-                    "input": text,
-                    "voice": "onyx"
-                ])
+
+        // Set the Content-Type to application/json
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {            
+            let payload = [
+                "text": text,
+                "voice": voice
+            ]
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         } catch {
             completion(.failure(error))
             return
         }
-        
+
         self.submitRequest(request: request, completion: completion)
     }
 }
