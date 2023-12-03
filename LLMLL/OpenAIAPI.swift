@@ -178,35 +178,11 @@ class TranscriptionAPI: OpenAIAPI {
     }
 }
 
-private func convertFileData(fieldName: String,
-                             fileName: String,
-                             mimeType: String,
-                             fileURL: URL,
-                             using boundary: String) -> Data {
-    var data = Data()
-    
-    data.appendString("--\(boundary)\r\n")
-    data.appendString("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n")
-    data.appendString("Content-Type: \(mimeType)\r\n\r\n")
-    if let fileData = try? Data(contentsOf: fileURL) {
-        data.append(fileData)
-    }
-    data.appendString("\r\n")
-    
-    return data
-}
 
 private extension Data {
     mutating func appendString(_ string: String) {
         if let data = string.data(using: .utf8) {
             append(data)
         }
-    }
-}
-
-extension NSMutableData {
-    func appendString(_ string: String) {
-        let data = string.data(using: String.Encoding.utf8, allowLossyConversion: false)
-        append(data!)
     }
 }
