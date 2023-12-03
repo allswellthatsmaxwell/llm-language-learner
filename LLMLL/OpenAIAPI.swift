@@ -62,7 +62,7 @@ class OpenAIAPI {
         return request
     }
     
-    func submitRequest(request: URLRequest, completion: @escaping (Result<Data, Error>) -> Void) {        
+    func submitRequest(request: URLRequest, completion: @escaping (Result<Data, Error>) -> Void) {
         self.session.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(isNetworkError(error) ? .failure(ConnectionError.offline) : .failure(error))
@@ -73,6 +73,8 @@ class OpenAIAPI {
                 completion(.failure(NSError(domain: "APIError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                 return
             }
+            let datastr = String(data: data, encoding: .utf8)
+            Logger.shared.log("\(#function).datastr: \(datastr)")
             
             completion(.success(data))
         }.resume()
@@ -106,8 +108,8 @@ class TextToSpeechAPI: OpenAIAPI {
 
 class TranscriptionAPI: OpenAIAPI {
     override var url: String {
-        return "https://api.openai.com/v1/audio/transcriptions"
-        // return "http://127.0.0.1:5000/transcribe"
+        // return "https://api.openai.com/v1/audio/transcriptions"
+        return "http://127.0.0.1:5000/transcribe"
     }
     private let boundary = "Boundary-\(UUID().uuidString)"
     
@@ -115,43 +117,87 @@ class TranscriptionAPI: OpenAIAPI {
         request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
     }
     
-    private func convertFileData(fieldName: String,
-                                 fileName: String,
-                                 mimeType: String,
-                                 fileURL: URL,
-                                 using boundary: String) -> Data {
-        let data = NSMutableData()
-        data.appendString("--\(boundary)\r\n")
-        data.appendString("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n")
-        data.appendString("Content-Type: \(mimeType)\r\n\r\n")
-        data.append(try! Data(contentsOf: fileURL))
-        data.appendString("\r\n")
-        return data as Data
-    }
+//    private func convertFileData(fieldName: String,
+//                                 fileName: String,
+//                                 mimeType: String,
+//                                 fileURL: URL,
+//                                 using boundary: String) -> Data {
+//        let data = NSMutableData()
+//        data.appendString("--\(boundary)\r\n")
+//        data.appendString("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n")
+//        data.appendString("Content-Type: \(mimeType)\r\n\r\n")
+//        data.append(try! Data(contentsOf: fileURL))
+//        data.appendString("\r\n")
+//        return data as Data
+//    }
+    
+    //    func transcribe(fileURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+    //        guard var request = self.constructRequest(url: url) else { return }
+    //
+    //        let httpBody = NSMutableData()
+    //
+    //        // Append file data
+    //        httpBody.append(self.convertFileData(fieldName: "file",
+    //                                             fileName: fileURL.lastPathComponent,
+    //                                             mimeType: "audio/m4a",
+    //                                             fileURL: fileURL,
+    //                                             using: boundary))
+    //
+    //        // Append model parameter
+    //        httpBody.appendString("--\(boundary)\r\n")
+    //        httpBody.appendString("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
+    //        httpBody.appendString("whisper-1\r\n")
+    //
+    //        // End of the multipart data
+    //        httpBody.appendString("--\(boundary)--\r\n")
+    //
+    //        request.httpBody = httpBody as Data
+    //
+    //        self.submitRequest(request: request, completion: completion)
+    //    }
     
     func transcribe(fileURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
         guard var request = self.constructRequest(url: url) else { return }
-        
-        let httpBody = NSMutableData()
-        
-        // Append file data
-        httpBody.append(self.convertFileData(fieldName: "file",
-                                             fileName: fileURL.lastPathComponent,
-                                             mimeType: "audio/x-m4a",
-                                             fileURL: fileURL,
-                                             using: boundary))
-        
-        // Append model parameter
-        httpBody.appendString("--\(boundary)\r\n")
-        httpBody.appendString("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
-        httpBody.appendString("whisper-1\r\n")
-        
-        // End of the multipart data
-        httpBody.appendString("--\(boundary)--\r\n")
-        
-        request.httpBody = httpBody as Data
-        
+
+        // Set the content type to the appropriate type of your file, or application/octet-stream for generic binary data
+        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+
+        do {
+            // Directly set the httpBody to the data of the file
+            let fileData = try Data(contentsOf: fileURL)
+            request.httpBody = fileData
+        } catch {
+            completion(.failure(error))
+            return
+        }
+
         self.submitRequest(request: request, completion: completion)
+    }
+}
+
+private func convertFileData(fieldName: String,
+                             fileName: String,
+                             mimeType: String,
+                             fileURL: URL,
+                             using boundary: String) -> Data {
+    var data = Data()
+    
+    data.appendString("--\(boundary)\r\n")
+    data.appendString("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n")
+    data.appendString("Content-Type: \(mimeType)\r\n\r\n")
+    if let fileData = try? Data(contentsOf: fileURL) {
+        data.append(fileData)
+    }
+    data.appendString("\r\n")
+    
+    return data
+}
+
+private extension Data {
+    mutating func appendString(_ string: String) {
+        if let data = string.data(using: .utf8) {
+            append(data)
+        }
     }
 }
 

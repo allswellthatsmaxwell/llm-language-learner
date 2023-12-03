@@ -12,7 +12,7 @@ import AVFoundation
 
 
 struct TranscriptionResult: Codable {
-    let text: String
+    let transcription: String
 }
 
 struct ChatResult: Codable {
@@ -217,10 +217,11 @@ class ChatViewModel: ObservableObject {
                 case .success(let transcriptData):
                     self?.isOffline = false
                     do {
+                        Logger.shared.log("\(#function).transcriptData: \(transcriptData)")
                         let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)
                         DispatchQueue.main.async {
-                            self?.inputText += transcriptionResult.text
-                            Logger.shared.log("inputText set to transcript: " + transcriptionResult.text)
+                            self?.inputText += transcriptionResult.transcription
+                            Logger.shared.log("inputText set to transcript: " + transcriptionResult.transcription)
                         }
                         Logger.shared.log("Transcription Received")
                     } catch {
