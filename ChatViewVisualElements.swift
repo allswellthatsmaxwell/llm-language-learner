@@ -70,13 +70,8 @@ struct CircleIconButton: View {
         self.iconName = iconName
         self.action = action
         self.size = size
-        if let topBottomPadding = topBottomPadding {
-            self.topBottomPadding = topBottomPadding
-        }
-        if let leadingTrailingPadding = leadingTrailingPadding {
-            self.leadingTrailingPadding = leadingTrailingPadding
-        }
-        
+        self.topBottomPadding = topBottomPadding ?? circleButtonTopBottomPadding
+        self.leadingTrailingPadding = leadingTrailingPadding ?? circleButtonLeadingTrailingPadding
     }
     
     var body: some View {
@@ -95,16 +90,29 @@ struct CircleIconButton: View {
 }
 
 struct AudioCircleIconButton: View {
+    @ObservedObject var viewModel: ChatViewModel
     @ObservedObject var audioRecorder: AudioRecorder
     let action: () -> Void
     let size: CGFloat
 
     var body: some View {
-        CircleIconButton(
-            iconName: audioRecorder.isRecording ? "stop.circle.fill" : "mic.circle",
-            action: action,
-            size: size
-        )
+        Group {
+            if self.viewModel.isTranscribing {
+                ProgressView()
+                    .frame(width: size, height: size)
+                    .scaleEffect(1.5)
+                    // .aspectRatio(1, contentMode: .fit)
+                    .padding([.top, .bottom], circleButtonTopBottomPadding)
+                    .padding([.leading, .trailing], circleButtonLeadingTrailingPadding)
+                    .cornerRadius(10)
+            } else {
+                CircleIconButton(
+                    iconName: self.audioRecorder.isRecording ? "stop.circle.fill" : "mic.circle",
+                    action: action,
+                    size: size
+                )
+            }
+        }
     }
 }
 

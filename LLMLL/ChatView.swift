@@ -46,6 +46,7 @@ class ChatViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var slowMode: Bool = false
     @Published var isOffline = false
+    @Published var isTranscribing = false
     
     init() {
         let activeConversation = ChatConversation(messages: [])
@@ -62,6 +63,7 @@ class ChatViewModel: ObservableObject {
                 Logger.shared.log("AudioURL is nil")
             }
         }
+        
         generateAnyMissingConversationTitles()
     }
     
@@ -211,6 +213,7 @@ class ChatViewModel: ObservableObject {
     }
     
     private func transcribeAudio(fileURL: URL) {
+        self.isTranscribing = true
         transcriptionAPI.transcribe(fileURL: fileURL) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -218,19 +221,19 @@ class ChatViewModel: ObservableObject {
                     self?.isOffline = false
                     do {
                         Logger.shared.log("\(#function).transcriptData: \(transcriptData)")
-                        let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)
-                        DispatchQueue.main.async {
+                        let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)                        
                             self?.inputText += transcriptionResult.transcription
                             Logger.shared.log("inputText set to transcript: " + transcriptionResult.transcription)
-                        }
                         Logger.shared.log("Transcription Received")
                     } catch {
                         Logger.shared.log("Failed to decode transcription result: \(error.localizedDescription)")
                     }
+                    self?.isTranscribing = false
                 case .failure(let error):
                     Logger.shared.log("\(#function): failure case.")
                     if case ConnectionError.offline = error { self?.isOffline = true }
                     Logger.shared.log("Error: \(error.localizedDescription)")
+                    self?.isTranscribing = false
                 }
             }
         }
@@ -420,6 +423,7 @@ struct ChatView: View {
                         }
                     }
                     AudioCircleIconButton(
+                        viewModel: self.viewModel,
                         audioRecorder: self.viewModel.audioRecorder,
                         action: {
                             viewModel.audioRecorder.toggleIsRecording()

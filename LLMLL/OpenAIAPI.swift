@@ -119,6 +119,25 @@ class TranscriptionAPI: OpenAIAPI {
     override func addContentType(_ request: inout URLRequest) {
         request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
     }
+
+    func transcribe(fileURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+        guard var request = self.constructRequest(url: url) else { return }
+
+        // Set the content type to the appropriate type of your file, or application/octet-stream for generic binary data
+        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+
+        do {
+            // Directly set the httpBody to the data of the file
+            let fileData = try Data(contentsOf: fileURL)
+            request.httpBody = fileData
+        } catch {
+            completion(.failure(error))
+            return
+        }
+
+        self.submitRequest(request: request, completion: completion)
+    }
+    
     
 //    private func convertFileData(fieldName: String,
 //                                 fileName: String,
@@ -159,23 +178,6 @@ class TranscriptionAPI: OpenAIAPI {
     //        self.submitRequest(request: request, completion: completion)
     //    }
     
-    func transcribe(fileURL: URL, completion: @escaping (Result<Data, Error>) -> Void) {
-        guard var request = self.constructRequest(url: url) else { return }
-
-        // Set the content type to the appropriate type of your file, or application/octet-stream for generic binary data
-        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
-
-        do {
-            // Directly set the httpBody to the data of the file
-            let fileData = try Data(contentsOf: fileURL)
-            request.httpBody = fileData
-        } catch {
-            completion(.failure(error))
-            return
-        }
-
-        self.submitRequest(request: request, completion: completion)
-    }
 }
 
 
