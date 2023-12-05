@@ -118,6 +118,7 @@ class ChatAPI: OpenAIAPI {
         self.language = language
         self.writingSystem = languageWritingSystems[language] ?? "the language's characters"
         self.languageSpecificRules = languageSpecificRulesDict[language] ?? ""
+        super.init()
     }
     
     func setLanguage(_ language: String) {
@@ -166,7 +167,7 @@ class ChatAPI: OpenAIAPI {
                 }
             case .failure(let error):
                 Logger.shared.log("Failed to get chat completion: \(error.localizedDescription)")
-                completion(isNetworkError(error) ? .failure(ConnectionError.offline) : .failure(error))
+                completion(isInternetError(error) ? .failure(ConnectionError.offline) : .failure(error))
             }
         }
     }
@@ -198,7 +199,7 @@ class ChatStreamingAPI: ChatAPI {
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 Logger.shared.log("ChatStreamingAPI.getChatCompletionResponse: Error in shared.dataTask: \(error.localizedDescription)")
-                if isNetworkError(error) {
+                if isInternetError(error) {
                     chunkCompletion(.failure(ConnectionError.offline))
                 }
             }

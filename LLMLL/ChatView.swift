@@ -31,11 +31,11 @@ class ChatViewModel: ObservableObject {
     
     @Published var activeConversationId: UUID
     @Published var titleStore = TitleStore()
-
+    
     
     @Published var audioRecorder = AudioRecorder()
     private var audioPlayer = AudioPlayerManager()
-        
+    
     private let transcriptionAPI = TranscriptionAPI()
     private let textToSpeechAPI = TextToSpeechAPI()
     
@@ -45,8 +45,8 @@ class ChatViewModel: ObservableObject {
     
     @Published var isLoading: Bool = false
     @Published var slowMode: Bool = false
-    @Published var isOffline = false
     @Published var isTranscribing = false
+    @Published var errorStatusManager = ErrorStatusManager()
     
     init() {
         let activeConversation = ChatConversation(messages: [])
@@ -162,12 +162,12 @@ class ChatViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch firstMessage {
                 case .success(let extractedMessage):
-                    self?.isOffline = false
+                    self?.errorStatusManager.setHappyState()
                     Logger.shared.log("processAndSynthesizeAudio: Extractor returned: \(extractedMessage.content)")
                     self?.speakText(extractedMessage, audioFilePath: audioFilePath, toggleLoadingState: toggleLoadingState)
                 case .failure(let error):
                     Logger.shared.log("speaking extracted text: \(error.localizedDescription)")
-                    if case ConnectionError.offline = error { self?.isOffline = true }
+                    self?.errorStatusManager.setNetworkErrorStatus(error)
                     toggleLoadingState() // turn off
                 }
             }
@@ -179,7 +179,7 @@ class ChatViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let audioData):
-                    self?.isOffline = false
+                    self?.errorStatusManager.setHappyState()
                     do {
                         try audioData.write(to: audioFilePath)
                         Logger.shared.log("Saved audio file to: \(audioFilePath)")
@@ -189,7 +189,7 @@ class ChatViewModel: ObservableObject {
                     }
                     toggleLoadingState() // turn off
                 case .failure(let error):
-                    if case ConnectionError.offline = error { self?.isOffline = true }
+                    self?.errorStatusManager.setNetworkErrorStatus(error)
                     Logger.shared.log("Failed to synthesize speech: \(error)")
                     toggleLoadingState() // turn off
                 }
@@ -218,12 +218,12 @@ class ChatViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let transcriptData):
-                    self?.isOffline = false
+                    self?.errorStatusManager.setHappyState()
                     do {
                         Logger.shared.log("\(#function).transcriptData: \(transcriptData)")
-                        let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)                        
-                            self?.inputText += transcriptionResult.transcription
-                            Logger.shared.log("inputText set to transcript: " + transcriptionResult.transcription)
+                        let transcriptionResult = try JSONDecoder().decode(TranscriptionResult.self, from: transcriptData)
+                        self?.inputText += transcriptionResult.transcription
+                        Logger.shared.log("inputText set to transcript: " + transcriptionResult.transcription)
                         Logger.shared.log("Transcription Received")
                     } catch {
                         Logger.shared.log("Failed to decode transcription result: \(error.localizedDescription)")
@@ -231,7 +231,7 @@ class ChatViewModel: ObservableObject {
                     self?.isTranscribing = false
                 case .failure(let error):
                     Logger.shared.log("\(#function): failure case.")
-                    if case ConnectionError.offline = error { self?.isOffline = true }
+                    self?.errorStatusManager.setNetworkErrorStatus(error)
                     Logger.shared.log("Error: \(error.localizedDescription)")
                     self?.isTranscribing = false
                 }
@@ -256,34 +256,37 @@ class ChatViewModel: ObservableObject {
             let emptyMessage = ChatMessage(msg: OpenAIMessage(AIContent: ""))
             targetConversation.append(emptyMessage)
             self.conversations[targetConversationId] = targetConversation
-            self.advisorChatAPI.sendMessages(messages: openAIMessages) { result in
+            
+            self.advisorChatAPI.sendMessages(messages: openAIMessages) { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let message):
-                        self.isOffline = false
+                        self?.errorStatusManager.setHappyState()
                         Logger.shared.log("Received message: \(message.content)")
-                        self.updateResponseText(ChatMessage(msg: message), &targetConversation, targetConversationId)
-                        self.conversations[targetConversationId] = targetConversation
+                        self?.updateResponseText(ChatMessage(msg: message), &targetConversation, targetConversationId)
+                        self?.conversations[targetConversationId] = targetConversation
                         targetConversation.save()
                         
                         if targetConversation.title == defaultChatTitle && targetConversation.messages.count >= 2 {
-                            self.generateSingleTitle(conversation: targetConversation)
+                            self?.generateSingleTitle(conversation: targetConversation)
                         }
-                        self.conversations[targetConversationId] = targetConversation
+                        self?.conversations[targetConversationId] = targetConversation
                     case .failure(let error):
-                        Logger.shared.log("\(#function): \(error.localizedDescription)")
-                        self.inputText = originalInputText
-                        self.conversations[self.activeConversationId]?.removeLastAIMessage()
-                        self.conversations[self.activeConversationId]?.removeLastUserMessage()
-                        if case ConnectionError.offline = error {
-                            self.isOffline = true
-                        }
+                        self?.recoverFromSendMessageError(error, originalInputText)
                     }
                 }
             }
         } else {
             Logger.shared.log("Error in sendMessage: targetConversation is nil")
         }
+    }
+    
+    func recoverFromSendMessageError(_ error: Error, _ originalInputText: String) {
+        Logger.shared.log("sendMessage: \(error.localizedDescription)")
+        self.inputText = originalInputText
+        self.conversations[self.activeConversationId]?.removeLastAIMessage()
+        self.conversations[self.activeConversationId]?.removeLastUserMessage()
+        self.errorStatusManager.setNetworkErrorStatus(error)
     }
     
 //    func sendMessageWithStreamedResponse() {
@@ -410,10 +413,9 @@ struct ChatView: View {
                 
                 HStack {
                     VStack {
-                        if self.viewModel.isOffline {
-                            OfflineIndicatorView()
+                        if self.viewModel.errorStatusManager.somethingWrong() {                            
+                            OfflineIndicatorView(errorStatusManager: self.viewModel.errorStatusManager)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                // .padding(.horizontal)
                                 .multilineTextAlignment(.leading)
 
                         }

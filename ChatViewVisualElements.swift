@@ -185,8 +185,21 @@ struct NewConversationButtonView: View {
 }
 
 struct OfflineIndicatorView: View {
+    @StateObject var errorStatusManager: ErrorStatusManager
+    
+    private func getUserFacingErrorMessage() -> String {
+        if self.errorStatusManager.isOffline {
+            return "Network error?! Please confirm you are connected to the internet."
+        } else if self.errorStatusManager.serverDown {
+            return "It looks like our server is down. I'm sorry ;-;"
+        } else {
+            return "Something is wrong, but I'm not sure what..."
+        }
+        
+    }
+    
     var body: some View {
-        Text("Network error?! Please confirm you are connected to the internet.")
+        Text(self.getUserFacingErrorMessage())
             .font(.system(size: 10))
             .foregroundColor(.red)
             // .frame(width: 100, height: 80, alignment: .center)
@@ -223,7 +236,7 @@ struct MessageBubble: View {
             if self.message.isUser { Spacer() } // Right-align user messages
             
             if self.message.content.isEmpty {
-                if self.viewModel.isOffline {
+                if self.viewModel.errorStatusManager.isOffline {
                     Text("")
                 } else {
                     ProgressView()
